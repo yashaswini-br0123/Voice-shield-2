@@ -39,18 +39,23 @@ async def global_exception_handler(request: Request, exc: Exception):
 app.include_router(api_router)
 
 # Mount frontend static files
-frontend_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend")
+root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+css_path = os.path.join(root_path, "css")
+js_path = os.path.join(root_path, "js")
 
-if os.path.exists(frontend_path):
-    app.mount("/static", StaticFiles(directory=frontend_path), name="static")
+if os.path.exists(css_path):
+    app.mount("/css", StaticFiles(directory=css_path), name="css")
 
-    @app.get("/")
-    @app.get("/index.html")
-    async def serve_index():
-        index_file = os.path.join(frontend_path, "index.html")
-        if os.path.exists(index_file):
-            return FileResponse(index_file)
-        return {"message": "VoiceShield Backend API is running."}
+if os.path.exists(js_path):
+    app.mount("/js", StaticFiles(directory=js_path), name="js")
+
+@app.get("/")
+@app.get("/index.html")
+async def serve_index():
+    index_file = os.path.join(root_path, "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
+    return {"message": "VoiceShield Backend API is running."}
 
 
 if __name__ == "__main__":
