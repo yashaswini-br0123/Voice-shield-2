@@ -130,8 +130,8 @@ class AASISTDetector:
         # Handling missing checkpoint
         if settings.DEMO_MODE:
             # Demo mode fallback: signal-dependent mock score for UI testing
-            phase_std = float(np.std(np.diff(audio[:1000])))
-            mock_score = 0.81 if phase_std < 0.05 else 0.28
+            phase_std = float(np.std(np.diff(audio[:1000]))) if len(audio) >= 1000 else 0.1
+            mock_score = 0.78 if phase_std < 0.0001 else 0.22
             return mock_score, {
                 "status": "demo_mode",
                 "score": mock_score,

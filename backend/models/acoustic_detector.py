@@ -30,43 +30,43 @@ class AcousticDetector:
         pitch_std = features.get("pitch_std", 0.0)
         voiced_ratio = features.get("voiced_ratio", 0.0)
         
-        if voiced_ratio > 0.3:
-            if f0_jitter < 0.003:
+        if voiced_ratio > 0.4:
+            if f0_jitter > 0.0001 and f0_jitter < 0.0015:
                 scores.append(0.78)
-                anomaly_reasons.append("Unnaturally rigid pitch contour with near-zero micro-vibrato (jitter < 0.3%)")
-            elif f0_jitter > 0.08:
+                anomaly_reasons.append("Unnaturally rigid pitch contour with near-zero micro-vibrato (jitter < 0.15%)")
+            elif f0_jitter > 0.15:
                 scores.append(0.70)
                 anomaly_reasons.append("Unstable glottal pitch transitions typical of voice conversion artifacts")
             else:
-                scores.append(0.30)
-        else:
-            scores.append(0.50)
-
-        # 2. High-Frequency Spectral Cutoff
-        # Many neural vocoders hard-cutoff energy near the Nyquist or vocoder frequency (e.g., 7.5 kHz)
-        high_freq_ratio = features.get("high_freq_energy_ratio", 0.0)
-        if high_freq_ratio < 0.0001:
-            scores.append(0.82)
-            anomaly_reasons.append("Abrupt high-frequency attenuation above 7.5 kHz (neural vocoder filter signature)")
+                scores.append(0.20)
         else:
             scores.append(0.25)
 
+        # 2. High-Frequency Spectral Cutoff
+        # Many neural vocoders hard-cutoff energy near vocoder frequency in high sample rates
+        high_freq_ratio = features.get("high_freq_energy_ratio", 0.0)
+        if sr >= 22050 and high_freq_ratio < 1e-6:
+            scores.append(0.78)
+            anomaly_reasons.append("Abrupt high-frequency attenuation above 7.5 kHz (neural vocoder filter signature)")
+        else:
+            scores.append(0.20)
+
         # 3. Spectral Enveloping & Bandwidth Oversmoothing
-        mel_std = features.get("mel_std", 1.0)
+        mel_std = features.get("mel_std", 10.0)
         bandwidth_mean = features.get("bandwidth_mean", 1000.0)
-        if mel_std < 8.0:
+        if mel_std < 3.0:
             scores.append(0.75)
             anomaly_reasons.append("Oversmoothed Mel-spectrogram energy distribution across frequency bands")
         else:
-            scores.append(0.35)
+            scores.append(0.20)
 
-        # 4. Spectral Flatness & Room Reverberation Inconsistency
+        # 4. Spectral Flatness
         spectral_flatness = features.get("spectral_flatness", 0.0)
-        if spectral_flatness < 0.0005:
+        if spectral_flatness > 0.05:
             scores.append(0.72)
-            anomaly_reasons.append("Acoustically sterile signal lacking natural room impulse reverberation")
+            anomaly_reasons.append("Acoustically unnatural noise distribution in spectral envelope")
         else:
-            scores.append(0.30)
+            scores.append(0.20)
 
         # Compute raw weighted mean score for Layer 1
         raw_score = float(np.mean(scores))

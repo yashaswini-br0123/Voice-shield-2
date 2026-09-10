@@ -142,14 +142,14 @@ class ImageDetector:
             
             ratio = outer_energy / (center_energy + 1e-6)
 
-            if ratio > 0.62:
+            if ratio > 0.78:
                 return 0.81, "2D FFT frequency spectrum exhibits artificial high-frequency grid artifacts (diffusion/GAN signature)"
-            elif ratio < 0.35:
+            elif ratio < 0.15:
                 return 0.72, "Oversmoothed high-frequency spectral roll-off typical of AI image generators"
             else:
-                return 0.30, ""
+                return 0.20, ""
         except Exception:
-            return 0.40, ""
+            return 0.22, ""
 
     def _analyze_ela(self, pil_img: Image.Image, file_path: str) -> Tuple[float, str]:
         """Error Level Analysis (ELA) JPEG compression residual check."""
@@ -176,12 +176,12 @@ class ImageDetector:
                 except Exception:
                     pass
 
-            if ela_std > 42.0:
+            if ela_std > 68.0:
                 return 0.79, "ELA (Error Level Analysis) reveals inconsistent JPEG compression residual variance across pixel regions"
             else:
-                return 0.28, ""
+                return 0.22, ""
         except Exception:
-            return 0.35, ""
+            return 0.22, ""
 
     def _analyze_noise_covariance(self, cv_img: np.ndarray) -> Tuple[float, str]:
         """Evaluates color channel noise covariance and pixel smoothness."""
@@ -193,19 +193,19 @@ class ImageDetector:
             
             lap_mean = (var_b + var_g + var_r) / 3.0
 
-            if lap_mean < 80.0:
+            if lap_mean < 45.0:
                 return 0.78, "Oversmoothed pixel texture with missing natural camera sensor noise"
-            elif abs(var_b - var_r) < 5.0 and lap_mean > 500:
+            elif abs(var_b - var_r) < 1.0 and lap_mean > 800:
                 return 0.74, "Synthetic color channel noise correlation across RGB components"
             else:
-                return 0.32, ""
+                return 0.20, ""
         except Exception:
-            return 0.30, ""
+            return 0.20, ""
 
     def _analyze_facial_gradients(self, cv_img: np.ndarray) -> Tuple[float, str, int]:
         """Detects faces and evaluates edge sharpness consistency around facial boundaries."""
         if self.face_cascade is None:
-            return 0.4, "", 0
+            return 0.22, "", 0
 
         try:
             gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
@@ -213,7 +213,7 @@ class ImageDetector:
             num_faces = len(faces)
 
             if num_faces == 0:
-                return 0.4, "", 0
+                return 0.22, "", 0
 
             face_vars = []
             for (x, y, w, h) in faces:
@@ -224,9 +224,9 @@ class ImageDetector:
             avg_face_var = np.mean(face_vars)
 
             ratio = avg_face_var / (bg_var + 1e-6)
-            if ratio > 3.5 or ratio < 0.25:
+            if ratio > 8.0 or ratio < 0.12:
                 return 0.82, "Facial edge gradient mismatch detected relative to background (Face Deepfake artifact)", num_faces
             else:
-                return 0.30, "", num_faces
+                return 0.20, "", num_faces
         except Exception:
-            return 0.4, "", 0
+            return 0.22, "", 0
