@@ -1,28 +1,38 @@
 import os
-import torch
-import torch.nn as nn
 import numpy as np
 from typing import Dict, Any, Tuple
 from backend.config import settings
 
+try:
+    import torch
+    import torch.nn as nn
+    HAS_TORCH = True
+except ImportError:
+    HAS_TORCH = False
+    torch = None
+    class nn:
+        Module = object
 
 # AASIST PyTorch Light Architecture Definition
-class SincConv1d(nn.Module):
+class SincConv1d(nn.Module if HAS_TORCH else object):
     """Sinc-convolution layer for raw audio waveform filtering"""
     def __init__(self, out_channels=70, kernel_size=128, sample_rate=16000):
-        super(SincConv1d, self).__init__()
-        self.out_channels = out_channels
-        self.kernel_size = kernel_size
-        self.sample_rate = sample_rate
-        self.conv = nn.Conv1d(1, out_channels, kernel_size, stride=1, padding=kernel_size // 2, bias=False)
+        if HAS_TORCH:
+            super(SincConv1d, self).__init__()
+            self.out_channels = out_channels
+            self.kernel_size = kernel_size
+            self.sample_rate = sample_rate
+            self.conv = torch.nn.Conv1d(1, out_channels, kernel_size, stride=1, padding=kernel_size // 2, bias=False)
 
     def forward(self, x):
+        if not HAS_TORCH:
+            return x
         if x.ndim == 2:
             x = x.unsqueeze(1)
         return self.conv(x)
 
 
-class AASISTModel(nn.Module):
+class AASISTModel(nn.Module if HAS_TORCH else object):
     """
     AASIST: Audio Anti-Spoofing using Integrated Spectro-Temporal Graph Neural Networks
     """
@@ -65,7 +75,7 @@ class AASISTDetector:
         self._load_model()
 
     def _load_model(self):
-        if os.path.exists(self.checkpoint_path):
+        if HAS_TORCH and os.path.exists(self.checkpoint_path):
             try:
                 self.model = AASISTModel()
                 state_dict = torch.load(self.checkpoint_path, map_location=torch.device('cpu'))
