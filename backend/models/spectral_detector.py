@@ -63,14 +63,14 @@ class SpectralDetector:
         lfcc_mean = lfcc_vec[:20]
         lfcc_std = lfcc_vec[20:40]
         
-        # Synthetic speech LFCCs typically exhibit lower variance across high-order cepstral coefficients
-        high_order_var = float(np.mean(lfcc_std[10:]))
-        if high_order_var < 0.05:
+        # Lower/mid order LFCC cepstral std across frames (natural human speech formants vary dynamically > 0.4)
+        low_mid_var = float(np.mean(lfcc_std[1:10])) if len(lfcc_std) >= 10 else 1.0
+        if low_mid_var < 0.20:
             score = 0.84
-            anomaly = "Sub-band linear cepstral energy variance is unnaturally static across frames"
+            anomaly = "Linear cepstral sub-band energy shows static frame-to-frame formant variance (synthetic vocoder signature)"
         else:
             score = 0.18
-            anomaly = "LFCC features display natural frame-to-frame dynamic variance"
+            anomaly = "LFCC features display natural frame-to-frame dynamic vocal tract resonance variance"
 
         status_label = "demo_mode" if settings.DEMO_MODE else "baseline_model"
         

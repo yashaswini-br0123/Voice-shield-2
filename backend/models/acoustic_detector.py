@@ -31,16 +31,16 @@ class AcousticDetector:
         voiced_ratio = features.get("voiced_ratio", 0.0)
         
         if voiced_ratio > 0.2:
-            if f0_jitter < 0.0015:
+            if f0_jitter < 0.0005 and pitch_std < 1.0:
                 scores.append(0.85)
-                anomaly_reasons.append("Unnaturally rigid pitch contour with near-zero micro-vibrato (jitter < 0.15%)")
+                anomaly_reasons.append("Unnaturally rigid pitch contour with near-zero micro-vibrato (jitter < 0.05%)")
             elif f0_jitter > 0.15:
                 scores.append(0.78)
                 anomaly_reasons.append("Unstable glottal pitch transitions typical of voice conversion artifacts")
             else:
                 scores.append(0.18)
         else:
-            scores.append(0.20)
+            scores.append(0.18)
 
         # 2. High-Frequency Spectral Cutoff
         # Many neural vocoders hard-cutoff energy near vocoder frequency in high sample rates
