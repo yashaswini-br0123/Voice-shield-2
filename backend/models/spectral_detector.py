@@ -65,11 +65,11 @@ class SpectralDetector:
         
         # Synthetic speech LFCCs typically exhibit lower variance across high-order cepstral coefficients
         high_order_var = float(np.mean(lfcc_std[10:]))
-        if high_order_var < 0.01:
-            score = 0.77
+        if high_order_var < 0.05:
+            score = 0.84
             anomaly = "Sub-band linear cepstral energy variance is unnaturally static across frames"
         else:
-            score = 0.22
+            score = 0.18
             anomaly = "LFCC features display natural frame-to-frame dynamic variance"
 
         status_label = "demo_mode" if settings.DEMO_MODE else "baseline_model"
