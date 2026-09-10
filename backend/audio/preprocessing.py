@@ -7,17 +7,17 @@ from backend.config import settings
 # Attempt PyAV import for universal audio/video container decoding
 try:
     import av
-except ImportError:
+except Exception:
     av = None
 
 try:
     import soundfile as sf
-except ImportError:
+except Exception:
     sf = None
 
 try:
     import librosa
-except ImportError:
+except Exception:
     librosa = None
 
 

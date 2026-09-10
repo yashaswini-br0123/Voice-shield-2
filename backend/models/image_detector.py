@@ -16,10 +16,13 @@ class ImageDetector:
     4. Facial Edge & Gradient Blur Consistency
     """
     def __init__(self):
-        cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
-        if os.path.exists(cascade_path):
-            self.face_cascade = cv2.CascadeClassifier(cascade_path)
-        else:
+        try:
+            cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+            if os.path.exists(cascade_path):
+                self.face_cascade = cv2.CascadeClassifier(cascade_path)
+            else:
+                self.face_cascade = None
+        except Exception:
             self.face_cascade = None
 
     def analyze(self, image_path: str) -> Tuple[float, Dict[str, Any]]:

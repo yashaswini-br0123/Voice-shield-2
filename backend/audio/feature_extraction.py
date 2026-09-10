@@ -4,7 +4,7 @@ from typing import Dict, Any
 
 try:
     import librosa
-except ImportError:
+except Exception:
     librosa = None
 
 

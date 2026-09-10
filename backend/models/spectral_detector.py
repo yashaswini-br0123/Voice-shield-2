@@ -1,5 +1,8 @@
 import os
-import joblib
+try:
+    import joblib
+except Exception:
+    joblib = None
 import numpy as np
 from typing import Dict, Any, Tuple
 from backend.audio.feature_extraction import extract_lfcc_features
@@ -19,7 +22,7 @@ class SpectralDetector:
         self._load_model()
 
     def _load_model(self):
-        if os.path.exists(self.model_path):
+        if joblib is not None and os.path.exists(self.model_path):
             try:
                 self.classifier = joblib.load(self.model_path)
                 self.is_loaded = True

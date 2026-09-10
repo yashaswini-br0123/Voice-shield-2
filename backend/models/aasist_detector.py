@@ -7,11 +7,14 @@ try:
     import torch
     import torch.nn as nn
     HAS_TORCH = True
-except ImportError:
+except Exception:
     HAS_TORCH = False
     torch = None
-    class nn:
+    class DummyNN:
         Module = object
+        def __getattr__(self, name):
+            return object
+    nn = DummyNN()
 
 # AASIST PyTorch Light Architecture Definition
 class SincConv1d(nn.Module if HAS_TORCH else object):
