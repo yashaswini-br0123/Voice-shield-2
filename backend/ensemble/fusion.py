@@ -60,6 +60,11 @@ class EnsembleFusion:
         total_weight = sum(w for _, _, w in active_layers)
         weighted_score_sum = sum(score * (w / total_weight) for _, score, w in active_layers)
         
+        # If any active layer detects high AI probability (> 0.80), ensure ensemble reflects strong layer severity
+        max_layer_score = max(score for _, score, _ in active_layers)
+        if max_layer_score > 0.80:
+            weighted_score_sum = max(weighted_score_sum, max_layer_score * 0.88)
+
         final_ai_prob = max(0.01, min(0.99, round(weighted_score_sum, 4)))
 
         # Direct Binary Classification (HUMAN vs AI)

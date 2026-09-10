@@ -68,8 +68,11 @@ class AcousticDetector:
         else:
             scores.append(0.20)
 
-        # Compute raw weighted mean score for Layer 1
-        raw_score = float(np.mean(scores))
+        # Compute raw weighted score for Layer 1
+        if any(s > 0.70 for s in scores):
+            raw_score = max(scores)
+        else:
+            raw_score = float(np.mean(scores))
         
         # Clamp score within [0.05, 0.95] for probabilistic output
         layer1_score = max(0.05, min(0.95, round(raw_score, 4)))
