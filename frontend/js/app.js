@@ -58,7 +58,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function checkBackendHealth() {
         try {
-            const res = await fetch(`${API_BASE_URL}/api/health`);
+            let res = await fetch(`${API_BASE_URL}/health`);
+            if (!res.ok) {
+                res = await fetch(`${API_BASE_URL}/api/health`);
+            }
             if (res.ok) {
                 const data = await res.json();
                 backendPill.className = 'status-pill status-online';
@@ -77,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
             backendPill.innerHTML = '<span class="dot"></span> Backend: Offline / Connecting...';
         }
     }
+
 
     // 2. Sidebar Navigation Switcher
     const allTabs = [tabAll, tabAudio, tabImage, tabVideo, tabRecord];
@@ -408,12 +412,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const apiPromise = (async () => {
                 try {
-                    return await fetch(`${API_BASE_URL}/api/analyze`, { method: 'POST', body: formData });
+                    let res = await fetch(`${API_BASE_URL}/analyze`, { method: 'POST', body: formData });
+                    if (!res.ok && res.status === 404) {
+                        res = await fetch(`${API_BASE_URL}/api/analyze`, { method: 'POST', body: formData });
+                    }
+                    return res;
                 } catch (e) {
                     await new Promise(r => setTimeout(r, 200));
-                    return await fetch(`${API_BASE_URL}/api/analyze`, { method: 'POST', body: formData });
+                    return await fetch(`${API_BASE_URL}/analyze`, { method: 'POST', body: formData });
                 }
             })();
+
 
             const [_, response] = await Promise.all([stepperPromise, apiPromise]);
 
