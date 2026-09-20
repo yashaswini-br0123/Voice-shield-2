@@ -1,51 +1,56 @@
 import sys
 import os
-import traceback
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
 
-import traceback
+from backend.config import settings
+from backend.api.routes import router as api_router
+from backend.utils.rate_limiter import RateLimiterMiddleware
 
-init_err = None
-try:
-    from backend.config import settings
-    from backend.api.routes import router as api_router
-    from backend.utils.rate_limiter import RateLimiterMiddleware
-except Exception as e:
-    init_err = f"{type(e).__name__}: {str(e)}\n{traceback.format_exc()}"
+app = FastAPI(
+    title=settings.APP_NAME,
+    version=settings.VERSION,
+    description="VoiceShield - Multimodal AI Deepfake Detection Platform"
+)
 
-if init_err:
-    app = FastAPI(title="VoiceShield API Error")
-    @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
-    async def catch_all_err(path: str):
-        return JSONResponse(
-            status_code=500,
-            content={"status": "error", "init_error": init_err},
-            headers={"Access-Control-Allow-Origin": "*"}
-        )
-else:
-    app = FastAPI(
-        title=settings.APP_NAME,
-        version=settings.VERSION,
-        description="VoiceShield - Multimodal AI Deepfake Detection Platform"
+app.add_middleware(RateLimiterMiddleware, max_requests=120, window_seconds=60)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal Server Error: {str(exc)}"},
+        headers={"Access-Control-Allow-Origin": "*"}
     )
 
-    app.add_middleware(RateLimiterMiddleware, max_requests=120, window_seconds=60)
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+app.include_router(api_router)
 
-    app.include_router(api_router)
+# Mount frontend static folders
+css_path = os.path.join(root_dir, "css")
+js_path = os.path.join(root_dir, "js")
+static_path = os.path.join(root_dir, "static")
 
+if os.path.exists(css_path):
+    app.mount("/css", StaticFiles(directory=css_path), name="css")
+
+if os.path.exists(js_path):
+    app.mount("/js", StaticFiles(directory=js_path), name="js")
+
+if os.path.exists(static_path):
+    app.mount("/static", StaticFiles(directory=static_path), name="static")
 
 @app.get("/")
 @app.get("/index.html")
@@ -54,6 +59,7 @@ async def serve_index():
     if os.path.exists(index_file):
         return FileResponse(index_file)
     return {"message": "VoiceShield Backend API is running."}
+
 
 
 
