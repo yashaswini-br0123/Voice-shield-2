@@ -1,8 +1,10 @@
 import sys
 import os
+import traceback
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
+
 
 # Ensure project root is in sys.path for Vercel serverless functions
 root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
