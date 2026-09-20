@@ -37,11 +37,24 @@ class VoiceRecorder {
                 }
             };
 
-            this.mediaRecorder.onstop = () => {
-                const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
-                const recordedFile = new File([audioBlob], `recorded_voice_${Date.now()}.wav`, { type: 'audio/wav' });
+            this.mediaRecorder.onstop = async () => {
+                const rawBlob = new Blob(this.audioChunks, { type: this.mediaRecorder.mimeType || 'audio/webm' });
+                let finalBlob = rawBlob;
+                let finalFileName = `recorded_voice_${Date.now()}.wav`;
+
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+                    const arrayBuffer = await rawBlob.arrayBuffer();
+                    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                    finalBlob = this._audioBufferToWav(audioBuffer);
+                    audioContext.close();
+                } catch (e) {
+                    console.warn("WAV conversion fallback:", e);
+                }
+
+                const recordedFile = new File([finalBlob], finalFileName, { type: 'audio/wav' });
                 if (this.onRecordComplete) {
-                    this.onRecordComplete(recordedFile, audioBlob);
+                    this.onRecordComplete(recordedFile, finalBlob);
                 }
                 this._cleanupStream();
             };
@@ -49,13 +62,11 @@ class VoiceRecorder {
             this.mediaRecorder.start();
             this.isRecording = true;
 
-            // Start visualizer and timer
             if (this.visualizer) {
                 this.visualizer.start(this.stream);
             }
             this._startTimer();
 
-            // Toggle UI buttons
             this.btnStart.classList.add('hidden');
             this.btnStop.classList.remove('hidden');
 
@@ -107,5 +118,50 @@ class VoiceRecorder {
             this.stream.getTracks().forEach(track => track.stop());
             this.stream = null;
         }
+    }
+
+    _audioBufferToWav(buffer) {
+        let numChannels = buffer.numberOfChannels;
+        let sampleRate = buffer.sampleRate;
+        let format = 1;
+        let bitDepth = 16;
+        let channels = [];
+        for (let i = 0; i < numChannels; i++) {
+            channels.push(buffer.getChannelData(i));
+        }
+        let numSamples = buffer.length;
+        let dataSize = numSamples * numChannels * 2;
+        let arrayBuffer = new ArrayBuffer(44 + dataSize);
+        let view = new DataView(arrayBuffer);
+
+        function writeString(offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+
+        writeString(0, 'RIFF');
+        view.setUint32(4, 36 + dataSize, true);
+        writeString(8, 'WAVE');
+        writeString(12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, format, true);
+        view.setUint16(22, numChannels, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * numChannels * 2, true);
+        view.setUint16(32, numChannels * 2, true);
+        view.setUint16(34, bitDepth, true);
+        writeString(36, 'data');
+        view.setUint32(40, dataSize, true);
+
+        let offset = 44;
+        for (let i = 0; i < numSamples; i++) {
+            for (let ch = 0; ch < numChannels; ch++) {
+                let s = Math.max(-1, Math.min(1, channels[ch][i]));
+                view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+                offset += 2;
+            }
+        }
+        return new Blob([view], { type: 'audio/wav' });
     }
 }

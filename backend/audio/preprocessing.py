@@ -4,6 +4,9 @@ from typing import Tuple, Dict, Any
 from fastapi import HTTPException, status
 from backend.config import settings
 
+import wave
+import struct
+
 # Attempt PyAV import for universal audio/video container decoding
 try:
     import av
@@ -21,7 +24,46 @@ except Exception:
     librosa = None
 
 
+def decode_wav_pure_python(file_path: str, target_sr: int = 16000) -> Tuple[np.ndarray, int, int, float]:
+    """
+    Pure Python WAV decoder using standard library 'wave' module.
+    Zero external binaries required (no ffprobe, ffmpeg, or libsndfile needed).
+    """
+    with wave.open(file_path, 'rb') as wf:
+        n_channels = wf.getnchannels()
+        sampwidth = wf.getsampwidth()
+        orig_sr = wf.getframerate()
+        n_frames = wf.getnframes()
+        raw_bytes = wf.readframes(n_frames)
+
+    if sampwidth == 2:
+        num_samples = len(raw_bytes) // 2
+        fmt = f"<{num_samples}h"
+        samples = np.array(struct.unpack(fmt, raw_bytes), dtype=np.float32) / 32768.0
+    elif sampwidth == 1:
+        samples = (np.frombuffer(raw_bytes, dtype=np.uint8).astype(np.float32) - 128.0) / 128.0
+    elif sampwidth == 4:
+        samples = np.frombuffer(raw_bytes, dtype=np.int32).astype(np.float32) / 2147483648.0
+    else:
+        raise ValueError(f"Unsupported sample width: {sampwidth}")
+
+    if n_channels > 1:
+        samples = samples.reshape(-1, n_channels).mean(axis=1)
+
+    if orig_sr != target_sr and len(samples) > 0:
+        num_target_samples = int(len(samples) * target_sr / orig_sr)
+        samples = np.interp(
+            np.linspace(0, len(samples), num_target_samples, endpoint=False),
+            np.arange(len(samples)),
+            samples
+        ).astype(np.float32)
+
+    duration = float(len(samples)) / float(target_sr)
+    return samples, target_sr, n_channels, duration
+
+
 def decode_with_pyav(file_path: str, target_sr: int = 16000) -> Tuple[np.ndarray, int, int, float]:
+
     """
     Decodes ANY audio or video container format (AAC, M4A, WMA, OPUS, AMR, MP3, WAV, OGG, FLAC, MP4, etc.)
     into a mono float32 numpy array resampled to target_sr using PyAV.
@@ -74,9 +116,14 @@ def load_and_preprocess_audio(file_path: str) -> Tuple[np.ndarray, Dict[str, Any
     audio_data = None
     sr = settings.TARGET_SAMPLE_RATE
     orig_channels = 1
-    duration = 0.0
+    # 0. Pure Python wave module (100% native standard library, zero ffprobe/ffmpeg required)
+    try:
+        audio_data, sr, orig_channels, duration = decode_wav_pure_python(file_path, target_sr=settings.TARGET_SAMPLE_RATE)
+    except Exception:
+        audio_data = None
 
     # 1. Try PyAV first (Universal decoder for AAC, M4A, WMA, OPUS, MP3, WAV, MP4, FLAC, etc.)
+
     if av is not None:
         try:
             audio_data, sr, orig_channels, duration = decode_with_pyav(file_path, target_sr=settings.TARGET_SAMPLE_RATE)
