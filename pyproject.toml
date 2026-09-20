@@ -1,4 +1,24 @@
-[build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+[project]
+name = "voice-shield-2"
+version = "2.0.0"
+description = "VoiceShield - Multimodal AI Deepfake Detection Engine"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.22.0",
+    "python-multipart>=0.0.6",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "numpy>=1.24.0,<2.0.0",
+    "soundfile>=0.12.0",
+    "pydub>=0.25.1",
+    "pillow>=10.0.0",
+    "python-dotenv>=1.0.0"
+]
+
+[tool.vercel]
+entrypoint = "backend.main:app"
+
+
 
