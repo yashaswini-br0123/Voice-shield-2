@@ -1,6 +1,10 @@
 import os
 from typing import List
-from pydantic_settings import BaseSettings
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
 
 
 def _env_int(key: str, default: int) -> int:
@@ -17,7 +21,7 @@ def _env_float(key: str, default: float) -> float:
     except Exception:
         return default
 
-class Settings(BaseSettings):
+class Settings:
     APP_NAME: str = "VoiceShield - Multimodal AI Deepfake Detection Platform"
     VERSION: str = "2.0.0"
     
@@ -67,14 +71,9 @@ class Settings(BaseSettings):
     MAX_AUDIO_DURATION_SEC: float = _env_float("MAX_AUDIO_DURATION_SEC", 120.0)
     MIN_AUDIO_DURATION_SEC: float = _env_float("MIN_AUDIO_DURATION_SEC", 0.5)
 
-    
     # Audio target sample rate
     TARGET_SAMPLE_RATE: int = 16000
-    
-    model_config = {
-        "env_file": ".env",
-        "extra": "ignore"
-    }
 
 
 settings = Settings()
+
