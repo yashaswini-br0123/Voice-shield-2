@@ -1,9 +1,15 @@
-import os
-import cv2
+try:
+    import cv2
+    HAS_OPENCV = True
+except Exception:
+    cv2 = None
+    HAS_OPENCV = False
+
 import numpy as np
 from PIL import Image, ImageChops, ImageEnhance
 from typing import Dict, Any, Tuple
 from backend.config import settings
+
 
 
 class ImageDetector:
@@ -16,14 +22,15 @@ class ImageDetector:
     4. Facial Edge & Gradient Blur Consistency
     """
     def __init__(self):
-        try:
-            cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
-            if os.path.exists(cascade_path):
-                self.face_cascade = cv2.CascadeClassifier(cascade_path)
-            else:
+        self.face_cascade = None
+        if HAS_OPENCV and cv2 is not None:
+            try:
+                cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+                if os.path.exists(cascade_path):
+                    self.face_cascade = cv2.CascadeClassifier(cascade_path)
+            except Exception:
                 self.face_cascade = None
-        except Exception:
-            self.face_cascade = None
+
 
     def analyze(self, image_path: str) -> Tuple[float, Dict[str, Any]]:
         """

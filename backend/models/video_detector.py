@@ -1,8 +1,15 @@
 import os
-import cv2
+try:
+    import cv2
+    HAS_OPENCV = True
+except Exception:
+    cv2 = None
+    HAS_OPENCV = False
+
 import tempfile
 import numpy as np
 from typing import Dict, Any, Tuple
+
 from backend.models.image_detector import ImageDetector
 from backend.models.acoustic_detector import AcousticDetector
 from backend.models.aasist_detector import AASISTDetector
