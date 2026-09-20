@@ -13,7 +13,8 @@ from backend.models.video_detector import VideoDetector
 from backend.ensemble.fusion import EnsembleFusion
 from backend.api.models_schema import DetectionResponseSchema, HealthResponseSchema
 
-router = APIRouter(prefix="/api", tags=["VoiceShield API"])
+router = APIRouter(tags=["VoiceShield API"])
+
 
 # Lazy singletons for fast serverless cold-start
 _acoustic_model = None
