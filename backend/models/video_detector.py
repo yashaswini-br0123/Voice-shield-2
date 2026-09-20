@@ -20,11 +20,41 @@ class VideoDetector:
     3. Audio-Visual Multimodal Score Fusion
     """
     def __init__(self):
-        self.image_detector = ImageDetector()
-        self.acoustic_detector = AcousticDetector()
-        self.aasist_detector = AASISTDetector()
-        self.spectral_detector = SpectralDetector()
-        self.fusion = EnsembleFusion()
+        self._image_detector = None
+        self._acoustic_detector = None
+        self._aasist_detector = None
+        self._spectral_detector = None
+        self._fusion = None
+
+    @property
+    def image_detector(self):
+        if self._image_detector is None:
+            self._image_detector = ImageDetector()
+        return self._image_detector
+
+    @property
+    def acoustic_detector(self):
+        if self._acoustic_detector is None:
+            self._acoustic_detector = AcousticDetector()
+        return self._acoustic_detector
+
+    @property
+    def aasist_detector(self):
+        if self._aasist_detector is None:
+            self._aasist_detector = AASISTDetector()
+        return self._aasist_detector
+
+    @property
+    def spectral_detector(self):
+        if self._spectral_detector is None:
+            self._spectral_detector = SpectralDetector()
+        return self._spectral_detector
+
+    @property
+    def fusion(self):
+        if self._fusion is None:
+            self._fusion = EnsembleFusion()
+        return self._fusion
 
     def analyze(self, video_path: str) -> Tuple[float, Dict[str, Any]]:
         """
