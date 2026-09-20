@@ -45,3 +45,9 @@ async def serve_index():
     if os.path.exists(index_file):
         return FileResponse(index_file)
     return {"message": "VoiceShield Backend API is running."}
+
+try:
+    from mangum import Mangum
+    handler = Mangum(app)
+except Exception:
+    handler = app
