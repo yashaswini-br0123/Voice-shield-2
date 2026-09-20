@@ -61,6 +61,7 @@ def get_fusion_engine():
 
 
 @router.get("/health", response_model=HealthResponseSchema)
+@router.get("/api/health", response_model=HealthResponseSchema)
 async def health_check():
     """
     Checks status of backend, multimodal detectors, and DEMO_MODE setting.
@@ -95,7 +96,9 @@ async def health_check():
 
 
 @router.post("/analyze", response_model=DetectionResponseSchema)
+@router.post("/api/analyze", response_model=DetectionResponseSchema)
 async def analyze_media(
+
     file: UploadFile = File(...),
     layer1_weight: Optional[float] = Form(default=None),
     layer2_weight: Optional[float] = Form(default=None),
