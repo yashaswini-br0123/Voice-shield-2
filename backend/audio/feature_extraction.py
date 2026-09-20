@@ -1,11 +1,25 @@
 import numpy as np
-from scipy.fftpack import dct
 from typing import Dict, Any
+
+try:
+    from scipy.fftpack import dct
+
+except Exception:
+    def dct(x, type=2, axis=1, norm='ortho'):
+        N = x.shape[axis]
+        k = np.arange(N)
+        n = np.arange(N)
+        cos_matrix = np.cos(np.pi * k[:, None] * (2 * n[None, :] + 1) / (2 * N))
+        if norm == 'ortho':
+            cos_matrix[0] *= np.sqrt(1 / (4 * N)) * 2
+            cos_matrix[1:] *= np.sqrt(1 / (2 * N)) * 2
+        return np.dot(x, cos_matrix.T)
 
 try:
     import librosa
 except Exception:
     librosa = None
+
 
 
 def extract_acoustic_features(audio: np.ndarray, sr: int = 16000) -> Dict[str, Any]:
