@@ -1,2 +1,4 @@
-[tool.vercel]
-entrypoint = "api.index:app"
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+

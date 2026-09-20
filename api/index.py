@@ -46,8 +46,5 @@ async def serve_index():
         return FileResponse(index_file)
     return {"message": "VoiceShield Backend API is running."}
 
-try:
-    from mangum import Mangum
-    handler = Mangum(app)
-except Exception:
-    handler = app
+# Vercel native Python runtime imports `app` directly for FastAPI ASGI execution
+
