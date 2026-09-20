@@ -59,5 +59,10 @@ async def serve_index():
 
 
 if __name__ == "__main__":
+    import sys
+    root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if root_path not in sys.path:
+        sys.path.insert(0, root_path)
     import uvicorn
-    uvicorn.run("backend.main:app", host=settings.HOST, port=settings.PORT, reload=False)
+    uvicorn.run(app, host=settings.HOST, port=settings.PORT, reload=False)
+
