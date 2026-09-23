@@ -58,8 +58,8 @@
             <div class="sidebar-tabs">
                 <button id="tab-all" class="sidebar-tab-btn active"><i class="fa-solid fa-folder-open"></i> Media Router</button>
                 <button id="tab-audio" class="sidebar-tab-btn"><i class="fa-solid fa-waveform"></i> Voice & Audio</button>
-                <button id="tab-image" class="sidebar-tab-btn"><i class="fa-solid fa-image"></i> TruFor Image</button>
-                <button id="tab-video" class="sidebar-tab-btn"><i class="fa-solid fa-film"></i> VideoMAE Video</button>
+                <button id="tab-image" class="sidebar-tab-btn"><i class="fa-solid fa-image"></i> SpecXNet Image</button>
+                <button id="tab-video" class="sidebar-tab-btn"><i class="fa-solid fa-film"></i> FakeSTormer Video</button>
                 <button id="tab-record" class="sidebar-tab-btn"><i class="fa-solid fa-microphone"></i> Record Mic</button>
             </div>
 
@@ -186,15 +186,15 @@
 
                     <div class="light-panel welcome-card">
                         <div class="w-card-icon icon-purple"><i class="fa-solid fa-image-polaroid"></i></div>
-                        <h4>TruFor Image Analysis</h4>
-                        <p>2D FFT spectral frequency rings, Error Level Analysis (ELA) compression residuals, noise covariance & visual forgery heatmap.</p>
-                        <span class="w-tag">TruFor Heatmap Check</span>
+                        <h4>SpecXNet Image Analysis</h4>
+                        <p>SpecXNet dual-domain spatial residuals, 2D FFT spectral frequency rings, ELA compression residuals, noise covariance & forgery heatmap.</p>
+                        <span class="w-tag">SpecXNet Heatmap Check</span>
                     </div>
 
                     <div class="light-panel welcome-card">
                         <div class="w-card-icon icon-red"><i class="fa-solid fa-film-canister"></i></div>
-                        <h4>VideoMAE Video Analysis</h4>
-                        <p>Multi-frame keyframe extraction evaluating spatial deepfake features and temporal inter-frame motion continuity.</p>
+                        <h4>FakeSTormer Video Analysis</h4>
+                        <p>FakeSTormer multi-frame spatio-temporal inconsistency learning and inter-frame motion continuity evaluation.</p>
                         <span class="w-tag">Spatio-Temporal Model</span>
                     </div>
                 </div>
@@ -364,26 +364,26 @@
                     </div>
                 </div>
 
-                <!-- Image TruFor Manipulation Heatmap Card (Shown for Image uploads) -->
+                <!-- Image SpecXNet Manipulation Heatmap Card (Shown for Image uploads) -->
                 <div id="image-heatmap-card" class="light-panel heatmap-card hidden" style="margin-bottom: 1.5rem;">
-                    <h3><i class="fa-solid fa-fire-flame-curved icon-purple"></i> TruFor Image Forgery & Manipulation Heatmap</h3>
-                    <p class="heatmap-desc" style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1rem;">Error Level Analysis (ELA) compression residual thermal colormap highlighting modified or synthetic pixel regions.</p>
+                    <h3><i class="fa-solid fa-fire-flame-curved icon-purple"></i> SpecXNet Image Forgery & Manipulation Heatmap</h3>
+                    <p class="heatmap-desc" style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1rem;">SpecXNet ELA compression residual thermal colormap highlighting modified or synthetic pixel regions.</p>
                     <div class="heatmap-view-wrapper" style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
                         <div class="heatmap-box" style="flex: 1; min-width: 260px;">
                             <span class="heatmap-box-title" style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--text-muted);">Original Input Image</span>
                             <img id="heatmap-orig-img" class="heatmap-img" alt="Original Image" style="width: 100%; border-radius: 8px; border: 1px solid var(--border-color); max-height: 320px; object-fit: contain; background: #000;">
                         </div>
                         <div class="heatmap-box" style="flex: 1; min-width: 260px;">
-                            <span class="heatmap-box-title" style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--text-muted);">TruFor Forgery Heatmap</span>
+                            <span class="heatmap-box-title" style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--text-muted);">SpecXNet Forgery Heatmap</span>
                             <img id="heatmap-mask-img" class="heatmap-img" alt="Manipulation Heatmap" style="width: 100%; border-radius: 8px; border: 1px solid var(--border-color); max-height: 320px; object-fit: contain; background: #000;">
                         </div>
                     </div>
                 </div>
 
-                <!-- VideoMAE Multi-Frame Spatio-Temporal Card (Shown for Video uploads) -->
+                <!-- FakeSTormer Multi-Frame Spatio-Temporal Card (Shown for Video uploads) -->
                 <div id="video-frames-card" class="light-panel video-frames-card hidden" style="margin-bottom: 1.5rem;">
-                    <h3><i class="fa-solid fa-film icon-red"></i> VideoMAE Multi-Frame Spatio-Temporal Analysis</h3>
-                    <p class="video-frames-desc" style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1rem;">Analyzed 8 uniform keyframes across video duration to evaluate spatio-temporal inter-frame motion continuity & gradient jitter.</p>
+                    <h3><i class="fa-solid fa-film icon-red"></i> FakeSTormer Multi-Frame Spatio-Temporal Analysis</h3>
+                    <p class="video-frames-desc" style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1rem;">FakeSTormer evaluated keyframes across video duration for fine-grained spatio-temporal inter-frame motion continuity & gradient jitter.</p>
                     <div id="video-keyframes-grid" class="video-keyframes-grid" style="display: flex; gap: 0.8rem; overflow-x: auto; padding-bottom: 0.5rem;">
                         <!-- Keyframe grid badges -->
                     </div>

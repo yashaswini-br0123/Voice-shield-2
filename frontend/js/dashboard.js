@@ -470,16 +470,16 @@ class DashboardManager {
         if (mediaType === "image") {
             const imgDet = data.layer_details.image || {};
             dimensions = [
-                { name: "TruFor 2D FFT Frequency Spectral Grid", score: imgDet.fft_spectral_score },
-                { name: "TruFor ELA Compression Residual Heatmap", score: imgDet.ela_compression_score },
-                { name: "TruFor Pixel Noise & Face Edge Blur", score: imgDet.noise_covariance_score }
+                { name: "SpecXNet 2D FFT Frequency Spectral Grid", score: imgDet.fft_spectral_score },
+                { name: "SpecXNet ELA Compression Residual Heatmap", score: imgDet.ela_compression_score },
+                { name: "SpecXNet Spatial Noise & Edge Consistency", score: imgDet.noise_covariance_score }
             ];
         } else if (mediaType === "video") {
             const vidDet = data.layer_details.video || {};
             dimensions = [
-                { name: "VideoMAE Multi-Frame Visual Keyframes", score: vidDet.visual_ai_prob },
-                { name: "VideoMAE Inter-Frame Motion Continuity", score: vidDet.temporal_ai_prob },
-                { name: "VideoMAE Spatio-Temporal Score Fusion", score: data.ai_probability }
+                { name: "FakeSTormer Multi-Frame Visual Keyframes", score: vidDet.visual_ai_prob },
+                { name: "FakeSTormer Inter-Frame Motion Continuity", score: vidDet.temporal_ai_prob },
+                { name: "FakeSTormer Spatio-Temporal Score Fusion", score: data.ai_probability }
             ];
         } else {
             const wavlmDet = (data.layer_details && data.layer_details.wavlm) || {};
@@ -532,16 +532,16 @@ class DashboardManager {
             const imgDet = data.layer_details.image || {};
             if (card4) card4.style.display = 'none';
             
-            this._setCard(1, "FEATURE 1", "TruFor 2D FFT Spectral", "Frequency spectrum grid ring analysis for diffusion/GAN grid artifacts.", imgDet.fft_spectral_score);
-            this._setCard(2, "FEATURE 2", "TruFor ELA Heatmap", "Error Level Analysis JPEG compression residual heatmap check.", imgDet.ela_compression_score);
-            this._setCard(3, "FEATURE 3", "TruFor Noise & Facial Edges", "Pixel noise covariance and facial boundary gradient consistency.", imgDet.noise_covariance_score);
+            this._setCard(1, "FEATURE 1", "SpecXNet Spatial Residual", "Dual-domain local spatial noise covariance & edge consistency check.", imgDet.ela_compression_score);
+            this._setCard(2, "FEATURE 2", "SpecXNet 2D Spectral FFT", "Global 2D FFT spectral frequency ring analysis for diffusion/GAN grid artifacts.", imgDet.fft_spectral_score);
+            this._setCard(3, "FEATURE 3", "SpecXNet Noise & Boundary", "Pixel noise covariance and facial boundary gradient consistency.", imgDet.noise_covariance_score);
 
         } else if (mediaType === "video") {
             const vidDet = data.layer_details.video || {};
             if (card4) card4.style.display = 'none';
 
-            this._setCard(1, "COMPONENT 1", "VideoMAE Visual Keyframes", "Frame-by-frame 2D FFT & ELA keyframe analysis across 8 sampled frames.", vidDet.visual_ai_prob);
-            this._setCard(2, "COMPONENT 2", "VideoMAE Temporal Motion", "Inter-frame motion continuity & Laplacian gradient jitter evaluation.", vidDet.temporal_ai_prob);
+            this._setCard(1, "COMPONENT 1", "FakeSTormer Visual Keyframes", "Multi-frame keyframe extraction & spatial deepfake score.", vidDet.visual_ai_prob);
+            this._setCard(2, "COMPONENT 2", "FakeSTormer Temporal Motion", "Inter-frame motion continuity & Laplacian gradient jitter evaluation.", vidDet.temporal_ai_prob);
             this._setCard(3, "COMPONENT 3", "Spatio-Temporal Fusion", "Combined Visual + Inter-frame Temporal motion deepfake probability score.", data.ai_probability);
 
         } else {

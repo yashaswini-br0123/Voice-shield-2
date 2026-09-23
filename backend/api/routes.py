@@ -143,8 +143,8 @@ async def analyze_media(
             anomalies = img_details.get("anomalies", [])
             verdict_label = "LIKELY AI-GENERATED" if score > 0.50 else "LIKELY HUMAN"
             explanation = (
-                f"The system performed spatial, 2D FFT spectral frequency, and Error Level Analysis (ELA) "
-                f"on the uploaded image ({img_details.get('dimensions', 'N/A')}) and classified it as {verdict_label} (Synthetic Probability: {int(score * 100)}%)."
+                f"SpecXNet performed dual-domain spatial residual and 2D FFT spectral analysis "
+                f"on the uploaded image ({img_details.get('dimensions', 'N/A')}) and classified it as {verdict_label} (AI Risk Score: {int(score * 100)}%)."
             )
 
             return {
@@ -180,8 +180,8 @@ async def analyze_media(
             anomalies = vid_details.get("anomalies", [])
             verdict_label = "LIKELY AI-GENERATED" if score > 0.50 else "LIKELY HUMAN"
             explanation = (
-                f"The system evaluated {vid_details.get('frames_analyzed', 0)} keyframes and "
-                f"analyzed VideoMAE spatio-temporal inter-frame motion continuity, classifying the video as {verdict_label} (Synthetic Probability: {int(score * 100)}%)."
+                f"FakeSTormer evaluated {vid_details.get('frames_analyzed', 0)} keyframes and "
+                f"analyzed fine-grained spatio-temporal inter-frame motion continuity, classifying the video as {verdict_label} (AI Risk Score: {int(score * 100)}%)."
             )
 
             return {

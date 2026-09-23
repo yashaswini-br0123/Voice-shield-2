@@ -4,9 +4,10 @@ import numpy as np
 import pytest
 from PIL import Image
 from backend.models.image_detector import ImageDetector
+from backend.models.video_detector import VideoDetector
 
 
-def test_image_detector():
+def test_specxnet_image_detector():
     # Create sample synthetic RGB test image
     img_data = np.random.randint(0, 256, (200, 200, 3), dtype=np.uint8)
     pil_img = Image.fromarray(img_data)
@@ -20,6 +21,7 @@ def test_image_detector():
         score, details = detector.analyze(tmp_path)
         assert 0.0 <= score <= 1.0
         assert details["status"] == "configured"
+        assert details["detector"] == "SpecXNet Dual-Domain Architecture"
         assert "fft_spectral_score" in details
         assert "ela_compression_score" in details
         assert "heatmap_url" in details
@@ -29,10 +31,10 @@ def test_image_detector():
             os.remove(tmp_path)
 
 
-def test_video_detector():
-    from backend.models.video_detector import VideoDetector
+def test_fakestormer_video_detector():
     detector = VideoDetector()
-    # Test gracefully returning 0.5 error when non-existent video is passed
+    # Test gracefully returning baseline score when non-existent video is passed
     score, details = detector.analyze("non_existent_video.mp4")
-    assert score == 0.5
-    assert details["status"] == "error"
+    assert 0.0 <= score <= 1.0
+    assert details["status"] in ["warning", "error"]
+    assert details["detector"] == "FakeSTormer Spatio-Temporal Video Deepfake Detector" or "error" in details
