@@ -103,15 +103,62 @@ def extract_acoustic_features(audio: np.ndarray, sr: int = 16000) -> Dict[str, A
             "high_freq_energy_ratio": high_freq_energy_ratio
         }
     else:
-        # Fallback NumPy implementation
+        # Dynamic pure NumPy pitch & spectral feature extraction fallback (serverless compatible)
+        frame_size = int(0.03 * sr)
+        frame_stride = int(0.01 * sr)
+        pitches = []
+        
+        if len(audio) >= frame_size:
+            num_frames = (len(audio) - frame_size) // frame_stride
+            for i in range(num_frames):
+                frame = audio[i*frame_stride : i*frame_stride + frame_size]
+                if np.std(frame) < 0.005:
+                    continue
+                corr = np.correlate(frame, frame, mode='full')
+                corr = corr[len(frame)-1:]
+                min_lag = max(1, int(sr / 500))
+                max_lag = min(len(corr) - 1, int(sr / 60))
+                if max_lag > min_lag:
+                    peak_lag = min_lag + np.argmax(corr[min_lag:max_lag])
+                    if corr[peak_lag] > 0.2 * corr[0]:
+                        pitches.append(sr / peak_lag)
+                        
+        if len(pitches) > 1:
+            p_arr = np.array(pitches)
+            p_mean = float(np.mean(p_arr))
+            p_std = float(np.std(p_arr))
+            diffs = np.abs(np.diff(p_arr))
+            f0_jitter = float(np.mean(diffs) / (p_mean + 1e-6))
+            voiced_ratio = float(len(pitches)) / float(max(1, (len(audio) - frame_size) // frame_stride))
+        else:
+            p_mean, p_std, f0_jitter, voiced_ratio = 0.0, 0.0, 0.0, 0.0
+
         n_fft = 512
-        spec = np.abs(np.fft.rfft(audio[:n_fft]))
+        num_spec_frames = max(1, (len(audio) - n_fft) // 256)
+        spec_frames = []
+        for i in range(num_spec_frames):
+            seg = audio[i*256 : i*256 + n_fft]
+            if len(seg) == n_fft:
+                spec_frames.append(np.abs(np.fft.rfft(seg * np.hamming(n_fft))))
+                
+        if len(spec_frames) > 0:
+            spec = np.array(spec_frames)
+            spec_db = 20 * np.log10(spec + 1e-6)
+            mel_mean = float(np.mean(spec_db))
+            mel_std = float(np.std(spec_db))
+            freqs = np.fft.rfftfreq(n_fft, 1.0/sr)
+            high_mask = freqs > (sr * 0.45)
+            high_freq_energy_ratio = float(np.sum(spec[:, high_mask]**2) / (np.sum(spec**2) + 1e-8))
+            spectral_flatness_mean = float(np.mean(np.exp(np.mean(np.log(spec + 1e-8), axis=1)) / (np.mean(spec, axis=1) + 1e-8)))
+        else:
+            mel_mean, mel_std, high_freq_energy_ratio, spectral_flatness_mean = 0.0, 0.0, 0.0, 0.0
+
         return {
             "mfcc_mean": [0.0] * 13,
             "mfcc_std": [0.0] * 13,
             "mfcc_delta_mean": [0.0] * 13,
-            "mel_mean": float(np.mean(spec)),
-            "mel_std": float(np.std(spec)),
+            "mel_mean": mel_mean,
+            "mel_std": mel_std,
             "centroid_mean": 1500.0,
             "centroid_std": 300.0,
             "bandwidth_mean": 1000.0,
@@ -119,12 +166,12 @@ def extract_acoustic_features(audio: np.ndarray, sr: int = 16000) -> Dict[str, A
             "zcr_mean": 0.05,
             "rms_mean": float(np.sqrt(np.mean(audio**2))),
             "rms_std": 0.01,
-            "pitch_mean": 120.0,
-            "pitch_std": 15.0,
-            "f0_jitter": 0.01,
-            "voiced_ratio": 0.5,
-            "spectral_flatness": 0.01,
-            "high_freq_energy_ratio": 0.001
+            "pitch_mean": p_mean,
+            "pitch_std": p_std,
+            "f0_jitter": f0_jitter,
+            "voiced_ratio": voiced_ratio,
+            "spectral_flatness": spectral_flatness_mean,
+            "high_freq_energy_ratio": high_freq_energy_ratio
         }
 
 
