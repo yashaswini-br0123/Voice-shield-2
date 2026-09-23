@@ -707,86 +707,110 @@ body.light-theme {
     gap: 1rem;
 }
 .gauge-card {
-    background: #f8fafc;
+    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
     border: 1px solid var(--border-color);
-    padding: 1.1rem;
-    border-radius: 10px;
+    padding: 1.15rem 1.25rem;
+    border-radius: 12px;
     text-align: center;
+    box-shadow: 0 4px 15px -3px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.gauge-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px -4px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 .gauge-title {
-    font-size: 0.75rem;
-    font-weight: 700;
+    font-size: 0.72rem;
+    font-weight: 800;
     color: var(--text-muted);
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
 }
 .gauge-value {
     font-family: var(--font-heading);
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0.3rem 0;
+    font-size: 2.15rem;
+    font-weight: 800;
+    margin: 0.35rem 0;
+    letter-spacing: -0.5px;
 }
 .val-red { color: var(--accent-crimson); }
 .val-blue { color: var(--accent-blue); }
 .gauge-bar-bg {
-    height: 6px;
+    height: 7px;
     background: #e2e8f0;
-    border-radius: 3px;
+    border-radius: 4px;
     overflow: hidden;
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.4rem;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 .gauge-bar-fill {
     height: 100%;
+    border-radius: 4px;
     background: linear-gradient(90deg, var(--accent-emerald), var(--accent-amber), var(--accent-crimson));
 }
 .gauge-legend {
     display: flex;
     justify-content: space-between;
-    font-size: 0.62rem;
+    font-size: 0.65rem;
+    font-weight: 600;
     color: var(--text-muted);
 }
 .gauge-sub {
-    font-size: 0.75rem;
+    font-size: 0.76rem;
+    font-weight: 600;
     color: var(--text-muted);
 }
 
-/* Single-Line Per Layer Compact List */
+/* Elevated Single-Line Per Layer Compact List */
 .layer-rows-container {
     display: flex;
     flex-direction: column;
     gap: 0.65rem;
     margin-bottom: 1.5rem;
+    width: 100%;
 }
 .layer-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.75rem 1.15rem;
-    border-radius: 8px;
+    padding: 0.85rem 1.25rem;
+    border-radius: 10px;
     gap: 1rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    transition: background 0.15s ease, border-color 0.15s ease;
+    background: linear-gradient(90deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid var(--accent-blue);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+    flex-wrap: nowrap;
 }
 .layer-row:hover {
-    border-color: var(--accent-blue);
+    transform: translateX(4px);
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.12);
+    border-color: #cbd5e1;
+    border-left-color: #2563eb;
 }
 .layer-row-left {
     display: flex;
     align-items: center;
     gap: 0.85rem;
-    flex: 1;
+    flex: 1 1 auto;
     min-width: 0;
 }
 .layer-tag {
     font-size: 0.65rem;
     font-weight: 800;
-    color: var(--accent-blue);
+    color: #2563eb;
     letter-spacing: 0.8px;
     white-space: nowrap;
-    background: rgba(59, 130, 246, 0.1);
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
+    background: rgba(37, 99, 235, 0.08);
+    padding: 0.28rem 0.65rem;
+    border-radius: 6px;
     flex-shrink: 0;
+    border: 1px solid rgba(37, 99, 235, 0.18);
 }
 .layer-info {
     display: flex;
@@ -797,7 +821,7 @@ body.light-theme {
 }
 .layer-title {
     font-family: var(--font-heading);
-    font-size: 0.9rem;
+    font-size: 0.92rem;
     font-weight: 700;
     white-space: nowrap;
     flex-shrink: 0;
@@ -805,17 +829,19 @@ body.light-theme {
     margin: 0;
 }
 .layer-desc-text {
-    font-size: 0.76rem;
+    font-size: 0.78rem;
     color: var(--text-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 380px;
 }
 .layer-row-right {
     display: flex;
     align-items: center;
     gap: 1rem;
     flex-shrink: 0;
+    white-space: nowrap;
 }
 .layer-score-inline {
     display: flex;
@@ -828,7 +854,7 @@ body.light-theme {
 .layer-score {
     font-family: var(--font-heading);
     font-size: 1.15rem;
-    font-weight: 700;
+    font-weight: 800;
     color: var(--text-primary);
     white-space: nowrap;
 }
@@ -838,44 +864,47 @@ body.light-theme {
     white-space: nowrap;
 }
 .meter-bar-inline {
-    width: 70px;
-    height: 6px;
+    width: 75px;
+    height: 7px;
     background: #e2e8f0;
-    border-radius: 3px;
+    border-radius: 4px;
     overflow: hidden;
     flex-shrink: 0;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 .meter-bar-fill {
     height: 100%;
-    background: var(--accent-blue);
+    border-radius: 4px;
+    background: linear-gradient(90deg, #3b82f6, #6366f1);
 }
 .layer-status-tag {
     font-size: 0.72rem;
-    padding: 0.28rem 0.6rem;
+    padding: 0.3rem 0.65rem;
     border-radius: 6px;
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    font-weight: 600;
+    font-weight: 700;
     white-space: nowrap;
     flex-shrink: 0;
-    background: rgba(148, 163, 184, 0.12);
-    color: var(--text-secondary);
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
 }
 .layer-status-tag.tag-active {
-    background: rgba(16, 185, 129, 0.12);
-    color: #10b981;
-    border: 1px solid rgba(16, 185, 129, 0.25);
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
 }
 .layer-status-tag.tag-baseline {
-    background: rgba(59, 130, 246, 0.12);
-    color: #3b82f6;
-    border: 1px solid rgba(59, 130, 246, 0.25);
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
 }
 .layer-status-tag.tag-reserve {
-    background: rgba(148, 163, 184, 0.12);
-    color: #94a3b8;
-    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: #f8fafc;
+    color: #64748b;
+    border: 1px solid #cbd5e1;
 }
 
 /* Explanation & Metadata Grid */
