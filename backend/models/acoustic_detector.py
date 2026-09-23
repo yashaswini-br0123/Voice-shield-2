@@ -34,10 +34,10 @@ class AcousticDetector:
         pitch_std = features.get("pitch_std", 0.0)
         voiced_ratio = features.get("voiced_ratio", 0.0)
         
-        if voiced_ratio > 0.2:
-            if f0_jitter < 0.0005 and pitch_std < 1.0:
-                scores.append(0.85)
-                anomaly_reasons.append("Unnaturally rigid pitch contour with near-zero micro-vibrato (jitter < 0.05%)")
+        if voiced_ratio > 0.15 or (pitch_std < 1.5 and features.get("rms_mean", 0.0) > 0.005):
+            if f0_jitter < 0.002 and pitch_std < 2.0:
+                scores.append(0.88)
+                anomaly_reasons.append("Unnaturally rigid pitch contour with near-zero micro-vibrato (jitter < 0.2%)")
             elif f0_jitter > 0.15:
                 scores.append(0.78)
                 anomaly_reasons.append("Unstable glottal pitch transitions typical of voice conversion artifacts")
@@ -49,18 +49,18 @@ class AcousticDetector:
         # 2. High-Frequency Spectral Cutoff
         # Many neural vocoders hard-cutoff energy near vocoder frequency in high sample rates
         high_freq_ratio = features.get("high_freq_energy_ratio", 0.0)
-        if sr >= 22050 and high_freq_ratio < 1e-6:
-            scores.append(0.78)
+        if (sr >= 22050 and high_freq_ratio < 1e-6) or high_freq_ratio < 1e-7:
+            scores.append(0.82)
             anomaly_reasons.append("Abrupt high-frequency attenuation above 7.5 kHz (neural vocoder filter signature)")
         else:
-            scores.append(0.20)
+            scores.append(0.18)
 
         # 3. Spectral Enveloping & Bandwidth Oversmoothing
         mel_std = features.get("mel_std", 10.0)
         bandwidth_mean = features.get("bandwidth_mean", 1000.0)
         rms_energy = features.get("rms_mean", 0.0)
-        if mel_std < 2.0 and rms_energy < 0.005:
-            scores.append(0.75)
+        if mel_std < 4.0 or (mel_std < 8.0 and pitch_std < 2.0):
+            scores.append(0.80)
             anomaly_reasons.append("Oversmoothed Mel-spectrogram energy distribution across frequency bands")
         else:
             scores.append(0.18)
@@ -73,8 +73,13 @@ class AcousticDetector:
         else:
             scores.append(0.18)
 
-        # Compute raw mean score for Layer 1
-        raw_score = float(np.mean(scores))
+        # Compute Layer 1 score: if high-confidence synthetic anomaly exists, preserve risk level
+        max_score = max(scores)
+        mean_score = float(np.mean(scores))
+        if max_score >= 0.75:
+            raw_score = 0.65 * max_score + 0.35 * mean_score
+        else:
+            raw_score = mean_score
         
         # Clamp score within [0.05, 0.95] for probabilistic output
         layer1_score = max(0.05, min(0.95, round(raw_score, 4)))
