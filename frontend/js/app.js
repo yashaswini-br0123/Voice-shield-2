@@ -50,6 +50,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnTestRealVideo = document.getElementById('btn-test-real-video');
     const btnTestAIVideo = document.getElementById('btn-test-ai-video');
 
+    const videoUrlInput = document.getElementById('video-url-input');
+    const btnAnalyzeUrl = document.getElementById('btn-analyze-url');
+
     const backendPill = document.getElementById('backend-status');
     const demoPill = document.getElementById('demo-status');
 
@@ -505,6 +508,75 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             btnAnalyze.disabled = false;
             btnAnalyze.innerHTML = '<i class="fa-solid fa-brain"></i> ANALYZE DEEPFAKE';
+        }
+    }
+
+    // 7. Video / YouTube URL Analysis Execution
+    btnAnalyzeUrl?.addEventListener('click', () => runUrlAnalysisExecution());
+    videoUrlInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            runUrlAnalysisExecution();
+        }
+    });
+
+    async function runUrlAnalysisExecution() {
+        const url = videoUrlInput?.value?.trim();
+        if (!url) {
+            alert('Please enter a valid YouTube or Video stream URL.');
+            return;
+        }
+
+        btnAnalyzeUrl.disabled = true;
+        btnAnalyzeUrl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> DOWNLOADING...';
+
+        try {
+            const stepperPromise = dashboard.runProgressStepper('video');
+
+            const apiPromise = (async () => {
+                try {
+                    let res = await fetch(`${API_BASE_URL}/analyze_url`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url: url })
+                    });
+                    if (!res.ok && res.status === 404) {
+                        res = await fetch(`${API_BASE_URL}/api/analyze_url`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url: url })
+                        });
+                    }
+                    return res;
+                } catch (e) {
+                    await new Promise(r => setTimeout(r, 200));
+                    return await fetch(`${API_BASE_URL}/analyze_url`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url: url })
+                    });
+                }
+            })();
+
+            const [_, response] = await Promise.all([stepperPromise, apiPromise]);
+
+            if (!response.ok) {
+                const errJson = await response.json();
+                throw new Error(errJson.detail || 'URL Video analysis failed.');
+            }
+
+            const data = await response.json();
+            dashboard.renderResults(data);
+
+        } catch (err) {
+            checkBackendHealth();
+            const errMsg = (err.message && err.message.includes('Failed to fetch'))
+                ? 'Backend Server Unreachable. Please ensure backend is running.'
+                : (err.message || 'URL Video analysis failed.');
+            dashboard.showError(errMsg);
+        } finally {
+            btnAnalyzeUrl.disabled = false;
+            btnAnalyzeUrl.innerHTML = '<i class="fa-solid fa-play"></i> Analyze Link';
         }
     }
 });

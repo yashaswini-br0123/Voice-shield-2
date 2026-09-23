@@ -2,6 +2,10 @@ from typing import Dict, Any, Optional, List
 from pydantic import BaseModel, Field
 
 
+class URLAnalysisRequest(BaseModel):
+    url: str = Field(..., description="YouTube video or direct video stream URL to analyze")
+
+
 class DetectionResponseSchema(BaseModel):
     prediction: str = Field(..., description="'Likely AI-Generated', 'Likely Human', or 'Uncertain'")
     ai_probability: float = Field(..., description="Overall AI probability [0.0 - 1.0]")

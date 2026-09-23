@@ -103,6 +103,17 @@
                         <button type="button" id="btn-test-ai-video" class="quick-btn btn-ai"><i class="fa-solid fa-clapperboard"></i> Test AI Video</button>
                     </div>
                 </div>
+
+                <!-- YouTube / Video URL Input Box -->
+                <div id="url-input-container" class="url-input-container" style="margin-top: 1rem;">
+                    <label for="video-url-input" style="font-size: 0.82rem; color: var(--text-muted); display: block; margin-bottom: 0.4rem; font-weight: 500;">
+                        <i class="fa-brands fa-youtube" style="color: #ef4444;"></i> Or Paste YouTube Video / Shorts Link:
+                    </label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input id="video-url-input" type="url" class="form-control" placeholder="https://www.youtube.com/watch?v=..." style="flex: 1; font-size: 0.82rem; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-color);">
+                        <button id="btn-analyze-url" type="button" class="btn btn-secondary btn-sm" style="font-size: 0.8rem; white-space: nowrap;"><i class="fa-solid fa-play"></i> Analyze Link</button>
+                    </div>
+                </div>
             </div>
 
             <!-- Record Microphone Container -->

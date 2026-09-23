@@ -12,7 +12,8 @@ from backend.models.wavlm_detector import WavLMDetector
 from backend.models.image_detector import ImageDetector
 from backend.models.video_detector import VideoDetector
 from backend.ensemble.fusion import EnsembleFusion
-from backend.api.models_schema import DetectionResponseSchema, HealthResponseSchema
+import tempfile
+from backend.api.models_schema import DetectionResponseSchema, HealthResponseSchema, URLAnalysisRequest
 
 router = APIRouter(tags=["VoiceShield API"])
 
@@ -243,3 +244,89 @@ async def analyze_media(
                 "processing_time_sec": proc_time,
                 "anomalies": ensemble_result["all_anomalies"]
             }
+
+
+@router.post("/analyze_url", response_model=DetectionResponseSchema)
+@router.post("/api/analyze_url", response_model=DetectionResponseSchema)
+async def analyze_video_url(payload: URLAnalysisRequest):
+    """
+    Downloads YouTube video or direct video URL stream and runs FakeSTormer Spatio-Temporal Video Deepfake Analysis.
+    """
+    start_time = time.time()
+    url = payload.url.strip()
+
+    if not url:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please provide a valid YouTube video or stream URL."
+        )
+
+    temp_video_filename = f"yt_video_{int(time.time())}.mp4"
+    temp_dir = tempfile.gettempdir()
+    temp_path = os.path.join(temp_dir, temp_video_filename)
+
+    try:
+        try:
+            import yt_dlp
+            HAS_YTDLP = True
+        except Exception:
+            HAS_YTDLP = False
+
+        if HAS_YTDLP:
+            ydl_opts = {
+                'format': 'best[ext=mp4]/best',
+                'outtmpl': temp_path,
+                'quiet': True,
+                'no_warnings': True,
+                'max_filesize': 50 * 1024 * 1024,
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
+        else:
+            import urllib.request
+            urllib.request.urlretrieve(url, temp_path)
+
+        if not os.path.exists(temp_path) or os.path.getsize(temp_path) == 0:
+            raise Exception("Video download yielded empty file.")
+
+        score, vid_details = get_video_model().analyze(temp_path)
+        proc_time = round(time.time() - start_time, 3)
+
+        prediction = "Likely AI-Generated" if score > 0.50 else "Likely Human"
+        confidence = round(0.50 + abs(score - 0.50) * 0.96, 4)
+
+        anomalies = vid_details.get("anomalies", [])
+        verdict_label = "LIKELY AI-GENERATED" if score > 0.50 else "LIKELY HUMAN"
+        explanation = (
+            f"FakeSTormer evaluated YouTube video stream and analyzed {vid_details.get('frames_analyzed', 0)} keyframes for fine-grained spatio-temporal motion continuity, classifying it as {verdict_label} (AI Risk Score: {int(score * 100)}%)."
+        )
+
+        return {
+            "prediction": prediction,
+            "ai_probability": score,
+            "ai_risk_score": score,
+            "confidence": confidence,
+            "media_type": "video",
+            "status": "success",
+            "demo_mode": settings.DEMO_MODE,
+            "layers": {
+                "visual_frames": vid_details.get("visual_ai_prob"),
+                "temporal_continuity": vid_details.get("temporal_ai_prob")
+            },
+            "layer_details": {"video": vid_details},
+            "audio": {"duration": vid_details.get("duration_sec", 0.0), "format": "mp4", "sample_rate": 16000, "channels": 1},
+            "explanation": explanation,
+            "processing_time_sec": proc_time,
+            "anomalies": anomalies
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Could not download or analyze video URL: {str(e)}"
+        )
+    finally:
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except Exception:
+                pass

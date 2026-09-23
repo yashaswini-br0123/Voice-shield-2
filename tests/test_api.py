@@ -40,3 +40,21 @@ def test_analyze_endpoint():
     assert "layers" in data
     assert "audio" in data
     assert data["audio"]["sample_rate"] == 16000
+
+
+def test_analyze_url_endpoint_empty_url():
+    response = client.post(
+        "/api/analyze_url",
+        json={"url": ""}
+    )
+    assert response.status_code == 400
+    assert "detail" in response.json()
+
+
+def test_analyze_url_endpoint_invalid_stream():
+    response = client.post(
+        "/api/analyze_url",
+        json={"url": "https://invalid-nonexistent-domain-xyz123.com/fake.mp4"}
+    )
+    assert response.status_code == 400
+    assert "detail" in response.json()
