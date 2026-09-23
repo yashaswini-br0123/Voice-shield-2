@@ -588,6 +588,7 @@ class DashboardManager {
         const titleEl = document.getElementById(`l${cardNum}-title`);
         const descEl = document.getElementById(`l${cardNum}-desc`);
         const scoreValEl = document.getElementById(`l${cardNum}-score-val`);
+        const scoreSubEl = document.getElementById(`l${cardNum}-sub`);
         const meterEl = document.getElementById(`l${cardNum}-meter`);
         const statusEl = document.getElementById(`l${cardNum}-status`);
 
@@ -595,12 +596,39 @@ class DashboardManager {
         if (titleEl) titleEl.textContent = title;
         if (descEl) descEl.textContent = desc;
 
-        const pct = scoreVal !== null && scoreVal !== undefined ? Math.round(scoreVal * 100) : 0;
-        if (scoreValEl) scoreValEl.textContent = scoreVal !== null && scoreVal !== undefined ? `${pct}%` : '768-dim';
-        if (meterEl) meterEl.style.width = scoreVal !== null && scoreVal !== undefined ? `${pct}%` : '100%';
+        const isPercentage = scoreVal !== null && scoreVal !== undefined && typeof scoreVal === 'number';
+        const pct = isPercentage ? Math.round(scoreVal * 100) : 0;
+
+        if (scoreValEl) scoreValEl.textContent = isPercentage ? `${pct}%` : '768-dim';
+        if (scoreSubEl) scoreSubEl.textContent = isPercentage ? 'AI Risk Score' : 'Vector Profiling';
+        if (meterEl) meterEl.style.width = isPercentage ? `${pct}%` : '100%';
 
         if (statusEl) {
-            statusEl.textContent = statusStr ? `Status: ${statusStr}` : (scoreVal !== null ? 'Status: Active' : 'Status: N/A');
+            let rawStatus = (statusStr || (isPercentage ? 'configured' : 'representation_active')).toLowerCase();
+            let cleanLabel = 'Active';
+            let tagClass = 'tag-active';
+            let icon = 'fa-circle-check';
+
+            if (rawStatus.includes('configured') && !rawStatus.includes('unconfigured')) {
+                cleanLabel = 'Active';
+                tagClass = 'tag-active';
+                icon = 'fa-circle-check';
+            } else if (rawStatus.includes('baseline')) {
+                cleanLabel = 'Baseline Model';
+                tagClass = 'tag-baseline';
+                icon = 'fa-layer-group';
+            } else if (rawStatus.includes('unconfigured')) {
+                cleanLabel = 'Unconfigured';
+                tagClass = 'tag-reserve';
+                icon = 'fa-circle-minus';
+            } else if (rawStatus.includes('representation') || rawStatus.includes('vector')) {
+                cleanLabel = 'Vector Active';
+                tagClass = 'tag-active';
+                icon = 'fa-chart-simple';
+            }
+
+            statusEl.className = `layer-status-tag ${tagClass}`;
+            statusEl.innerHTML = `<i class="fa-solid ${icon}"></i> ${cleanLabel}`;
         }
     }
 }
