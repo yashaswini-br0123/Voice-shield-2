@@ -64,13 +64,13 @@ class SpectralDetector:
             except Exception as e:
                 print(f"[SpectralDetector] Classifier inference error: {e}")
 
-        # Baseline heuristic calculation using LFCC feature vector & delta cepstral variance
-        lfcc_delta_std = lfcc_vec[60:80]
-        delta_std_mean = float(np.mean(lfcc_delta_std)) if len(lfcc_delta_std) > 0 else 0.0
+        # Baseline heuristic calculation using LFCC feature vector formant variance
+        lfcc_std = lfcc_vec[20:40]
+        lfcc_std_mean = float(np.mean(lfcc_std)) if len(lfcc_std) > 0 else 0.0
         
-        if delta_std_mean > 4.5:
+        if lfcc_std_mean < 0.80:
             score = 0.78
-            anomaly = "Linear cepstral sub-band energy shows unnatural frame-to-frame delta trajectory (synthetic vocoder artifact)"
+            anomaly = "Linear cepstral sub-band energy shows static frame-to-frame formant variance (synthetic vocoder signature)"
         else:
             score = 0.18
             anomaly = "LFCC features display natural frame-to-frame dynamic vocal tract resonance variance"
