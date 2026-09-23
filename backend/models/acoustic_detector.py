@@ -58,25 +58,23 @@ class AcousticDetector:
         # 3. Spectral Enveloping & Bandwidth Oversmoothing
         mel_std = features.get("mel_std", 10.0)
         bandwidth_mean = features.get("bandwidth_mean", 1000.0)
-        if mel_std < 3.0:
+        rms_energy = features.get("rms_mean", 0.0)
+        if mel_std < 2.0 and rms_energy < 0.005:
             scores.append(0.75)
             anomaly_reasons.append("Oversmoothed Mel-spectrogram energy distribution across frequency bands")
         else:
-            scores.append(0.20)
+            scores.append(0.18)
 
         # 4. Spectral Flatness
         spectral_flatness = features.get("spectral_flatness", 0.0)
-        if spectral_flatness > 0.05:
+        if spectral_flatness > 0.08:
             scores.append(0.72)
             anomaly_reasons.append("Acoustically unnatural noise distribution in spectral envelope")
         else:
-            scores.append(0.20)
+            scores.append(0.18)
 
-        # Compute raw weighted score for Layer 1
-        if any(s > 0.70 for s in scores):
-            raw_score = max(scores)
-        else:
-            raw_score = float(np.mean(scores))
+        # Compute raw mean score for Layer 1
+        raw_score = float(np.mean(scores))
         
         # Clamp score within [0.05, 0.95] for probabilistic output
         layer1_score = max(0.05, min(0.95, round(raw_score, 4)))
