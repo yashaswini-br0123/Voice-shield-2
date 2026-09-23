@@ -64,11 +64,11 @@ class SpectralDetector:
             except Exception as e:
                 print(f"[SpectralDetector] Classifier inference error: {e}")
 
-        # Baseline heuristic calculation using LFCC feature vector formant variance (sub-bands 1..19)
-        lfcc_std = lfcc_vec[21:40]
-        lfcc_std_mean = float(np.mean(lfcc_std)) if len(lfcc_std) > 0 else 0.0
+        # Baseline heuristic calculation using higher-order LFCC cepstral variance (sub-bands 10..19)
+        lfcc_std_high = lfcc_vec[30:40]
+        high_var_mean = float(np.mean(lfcc_std_high)) if len(lfcc_std_high) > 0 else 0.0
         
-        if lfcc_std_mean < 0.50:
+        if high_var_mean < 2.0:
             score = 0.78
             anomaly = "Linear cepstral sub-band energy shows static frame-to-frame formant variance (synthetic vocoder signature)"
         else:
