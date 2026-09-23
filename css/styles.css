@@ -1285,11 +1285,13 @@ body.dark-theme {
     --text-muted: #94a3b8;
 
     background-color: var(--bg-main) !important;
+    background: var(--bg-main) !important;
     color: var(--text-primary) !important;
 }
 
 body.dark-theme .sidebar-panel {
     background-color: var(--bg-sidebar) !important;
+    background: var(--bg-sidebar) !important;
     border-color: var(--border-color) !important;
 }
 
@@ -1297,7 +1299,6 @@ body.dark-theme .light-panel,
 body.dark-theme .welcome-card,
 body.dark-theme .verdict-hero-card,
 body.dark-theme .layer-card,
-body.dark-theme .layer-row,
 body.dark-theme .explanation-card,
 body.dark-theme .metadata-card,
 body.dark-theme .forensic-report-card,
@@ -1305,17 +1306,112 @@ body.dark-theme .progress-card,
 body.dark-theme .error-card,
 body.dark-theme .app-footer {
     background-color: var(--bg-card) !important;
+    background: var(--bg-card) !important;
     border-color: var(--border-color) !important;
     color: var(--text-primary) !important;
+}
+
+/* Gauge Cards Dark Mode */
+body.dark-theme .gauge-card {
+    background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
+    border-color: #334155 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+    color: var(--text-primary) !important;
+}
+body.dark-theme .gauge-title,
+body.dark-theme .gauge-sub,
+body.dark-theme .gauge-legend {
+    color: #94a3b8 !important;
+}
+body.dark-theme .gauge-bar-bg {
+    background: #334155 !important;
+}
+
+/* Elevated Single-Line Layer Rows Dark Mode */
+body.dark-theme .layer-row {
+    background: linear-gradient(90deg, #151c28 0%, #0f172a 100%) !important;
+    border-color: #1e293b !important;
+    border-left-color: #3b82f6 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+body.dark-theme .layer-row:hover {
+    border-color: #334155 !important;
+    border-left-color: #60a5fa !important;
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.25) !important;
+}
+body.dark-theme .layer-title {
+    color: #f8fafc !important;
+}
+body.dark-theme .layer-desc-text {
+    color: #94a3b8 !important;
+}
+body.dark-theme .layer-score {
+    color: #f8fafc !important;
+}
+body.dark-theme .layer-score-sub {
+    color: #94a3b8 !important;
+}
+body.dark-theme .meter-bar-inline {
+    background: #334155 !important;
+}
+body.dark-theme .layer-tag {
+    background: rgba(59, 130, 246, 0.15) !important;
+    color: #60a5fa !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+}
+body.dark-theme .layer-status-tag {
+    background: #1e293b !important;
+    color: #cbd5e1 !important;
+    border-color: #334155 !important;
+}
+body.dark-theme .layer-status-tag.tag-active {
+    background: rgba(16, 185, 129, 0.15) !important;
+    color: #34d399 !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+}
+body.dark-theme .layer-status-tag.tag-baseline {
+    background: rgba(59, 130, 246, 0.15) !important;
+    color: #60a5fa !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+}
+body.dark-theme .layer-status-tag.tag-reserve {
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+    border-color: #334155 !important;
+}
+
+/* Moving Wave Card Dark Mode */
+body.dark-theme .moving-wave-card {
+    background: linear-gradient(145deg, #151c28 0%, #0f172a 100%) !important;
+    border-color: #1e293b !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+}
+body.dark-theme .wave-card-title-wrap h3 {
+    color: #f8fafc !important;
+}
+body.dark-theme .wave-live-badge {
+    background: rgba(59, 130, 246, 0.15) !important;
+    color: #60a5fa !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+}
+body.dark-theme .wave-card-footer {
+    background: #0f172a !important;
+    border-color: #1e293b !important;
+}
+body.dark-theme .w-stat-label {
+    color: #94a3b8 !important;
+}
+body.dark-theme .w-stat-val {
+    color: #f8fafc !important;
 }
 
 body.dark-theme .dropzone-box,
 body.dark-theme .quick-test-box,
 body.dark-theme .recorder-box,
 body.dark-theme .preview-card,
-body.dark-theme .sidebar-footer-note,
-body.dark-theme .gauge-card {
+body.dark-theme .sidebar-footer-note {
     background-color: #111827 !important;
+    background: #111827 !important;
     border-color: var(--border-color) !important;
     color: var(--text-primary) !important;
 }
