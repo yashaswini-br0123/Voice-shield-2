@@ -538,7 +538,7 @@ class DashboardManager {
 
     _updateLayerCards(data) {
         const mediaType = data.media_type || "audio";
-        const card4 = document.querySelector('.layer-cards-grid .layer-card:nth-child(4)');
+        const card4 = document.querySelector('.layer-rows-container .layer-row:nth-child(4)') || document.querySelector('.layer-cards-grid .layer-card:nth-child(4)');
 
         if (mediaType === "image") {
             const imgDet = data.layer_details.image || {};

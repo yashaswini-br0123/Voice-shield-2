@@ -307,72 +307,89 @@
                     </div>
                 </div>
 
-                <!-- 4-Layer Score Breakdown Cards -->
-                <div class="layer-cards-grid">
+                <!-- Multimodal Feature Analysis Rows (Single Line Per Feature) -->
+                <div class="layer-rows-container">
                     
-                    <div class="light-panel layer-card">
-                        <div class="layer-card-header">
+                    <div class="light-panel layer-row">
+                        <div class="layer-row-left">
                             <span class="layer-tag" id="l1-tag">FEATURE 1</span>
-                            <h4 id="l1-title">Acoustic Analysis</h4>
+                            <div class="layer-info">
+                                <h4 id="l1-title" class="layer-title">Acoustic Analysis</h4>
+                                <span id="l1-desc" class="layer-desc-text">MFCCs, Mel Spectrogram, Pitch Jitter, Spectral Centroid, Reverberation.</span>
+                            </div>
                         </div>
-                        <p class="layer-desc" id="l1-desc">MFCCs, Mel Spectrogram, Pitch Jitter, Spectral Centroid, Reverberation.</p>
-                        <div class="layer-score-wrapper">
-                            <span id="l1-score-val" class="layer-score">72%</span>
-                            <span class="layer-score-sub" id="l1-sub">AI Risk Score</span>
+                        <div class="layer-row-right">
+                            <div class="layer-score-inline">
+                                <span id="l1-score-val" class="layer-score">18%</span>
+                                <span id="l1-sub" class="layer-score-sub">AI Risk Score</span>
+                            </div>
+                            <div class="meter-bar-inline">
+                                <div id="l1-meter" class="meter-bar-fill" style="width: 18%;"></div>
+                            </div>
+                            <div id="l1-status" class="layer-status-tag tag-active"><i class="fa-solid fa-circle-check"></i> Active</div>
                         </div>
-                        <div class="meter-bar-bg">
-                            <div id="l1-meter" class="meter-bar-fill" style="width: 72%;"></div>
-                        </div>
-                        <div id="l1-status" class="layer-status-tag">Status: Active</div>
                     </div>
 
-                    <div class="light-panel layer-card">
-                        <div class="layer-card-header">
+                    <div class="light-panel layer-row">
+                        <div class="layer-row-left">
                             <span class="layer-tag" id="l2-tag">FEATURE 2</span>
-                            <h4 id="l2-title">Waveform & Phase</h4>
+                            <div class="layer-info">
+                                <h4 id="l2-title" class="layer-title">Waveform & Phase</h4>
+                                <span id="l2-desc" class="layer-desc-text">AASIST PyTorch Graph Neural Network raw waveform phase analysis.</span>
+                            </div>
                         </div>
-                        <p class="layer-desc" id="l2-desc">AASIST PyTorch Graph Neural Network raw waveform phase analysis.</p>
-                        <div class="layer-score-wrapper">
-                            <span id="l2-score-val" class="layer-score">91%</span>
-                            <span class="layer-score-sub" id="l2-sub">AI Risk Score</span>
+                        <div class="layer-row-right">
+                            <div class="layer-score-inline">
+                                <span id="l2-score-val" class="layer-score">768-dim</span>
+                                <span id="l2-sub" class="layer-score-sub">Vector Profiling</span>
+                            </div>
+                            <div class="meter-bar-inline">
+                                <div id="l2-meter" class="meter-bar-fill" style="width: 100%;"></div>
+                            </div>
+                            <div id="l2-status" class="layer-status-tag tag-reserve"><i class="fa-solid fa-circle-minus"></i> Unconfigured</div>
                         </div>
-                        <div class="meter-bar-bg">
-                            <div id="l2-meter" class="meter-bar-fill" style="width: 91%;"></div>
-                        </div>
-                        <div id="l2-status" class="layer-status-tag">Status: Active</div>
                     </div>
 
-                    <div class="light-panel layer-card">
-                        <div class="layer-card-header">
+                    <div class="light-panel layer-row">
+                        <div class="layer-row-left">
                             <span class="layer-tag" id="l3-tag">FEATURE 3</span>
-                            <h4 id="l3-title">Spectral Analysis</h4>
+                            <div class="layer-info">
+                                <h4 id="l3-title" class="layer-title">Spectral Analysis</h4>
+                                <span id="l3-desc" class="layer-desc-text">LFCC (Linear Frequency Cepstral Coefficients) & Scikit-Learn Classifier.</span>
+                            </div>
                         </div>
-                        <p class="layer-desc" id="l3-desc">LFCC (Linear Frequency Cepstral Coefficients) & Scikit-Learn Classifier.</p>
-                        <div class="layer-score-wrapper">
-                            <span id="l3-score-val" class="layer-score">84%</span>
-                            <span class="layer-score-sub" id="l3-sub">AI Risk Score</span>
+                        <div class="layer-row-right">
+                            <div class="layer-score-inline">
+                                <span id="l3-score-val" class="layer-score">18%</span>
+                                <span id="l3-sub" class="layer-score-sub">AI Risk Score</span>
+                            </div>
+                            <div class="meter-bar-inline">
+                                <div id="l3-meter" class="meter-bar-fill" style="width: 18%;"></div>
+                            </div>
+                            <div id="l3-status" class="layer-status-tag tag-baseline"><i class="fa-solid fa-layer-group"></i> Baseline Model</div>
                         </div>
-                        <div class="meter-bar-bg">
-                            <div id="l3-meter" class="meter-bar-fill" style="width: 84%;"></div>
-                        </div>
-                        <div id="l3-status" class="layer-status-tag">Status: Active</div>
                     </div>
 
-                    <div class="light-panel layer-card">
-                        <div class="layer-card-header">
+                    <div class="light-panel layer-row">
+                        <div class="layer-row-left">
                             <span class="layer-tag" id="l4-tag">FEATURE 4</span>
-                            <h4 id="l4-title">WavLM SSL Representation</h4>
+                            <div class="layer-info">
+                                <h4 id="l4-title" class="layer-title">WavLM SSL Representation</h4>
+                                <span id="l4-desc" class="layer-desc-text">WavLM Base 768-dimensional self-supervised speech representation encoder.</span>
+                            </div>
                         </div>
-                        <p class="layer-desc" id="l4-desc">WavLM Base 768-dimensional self-supervised speech representation encoder.</p>
-                        <div class="layer-score-wrapper">
-                            <span id="l4-score-val" class="layer-score">768-dim</span>
-                            <span class="layer-score-sub" id="l4-sub">SSL Vector Profiling</span>
+                        <div class="layer-row-right">
+                            <div class="layer-score-inline">
+                                <span id="l4-score-val" class="layer-score">768-dim</span>
+                                <span id="l4-sub" class="layer-score-sub">Vector Profiling</span>
+                            </div>
+                            <div class="meter-bar-inline">
+                                <div id="l4-meter" class="meter-bar-fill" style="width: 100%;"></div>
+                            </div>
+                            <div id="l4-status" class="layer-status-tag tag-active"><i class="fa-solid fa-chart-simple"></i> Vector Active</div>
                         </div>
-                        <div class="meter-bar-bg">
-                            <div id="l4-meter" class="meter-bar-fill" style="width: 100%;"></div>
-                        </div>
-                        <div id="l4-status" class="layer-status-tag tag-active"><i class="fa-solid fa-chart-simple"></i> Vector Active</div>
                     </div>
+
                 </div>
 
                 <!-- Image SpecXNet Manipulation Heatmap Card (Shown for Image uploads) -->
