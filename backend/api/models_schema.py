@@ -5,7 +5,10 @@ from pydantic import BaseModel, Field
 class DetectionResponseSchema(BaseModel):
     prediction: str = Field(..., description="'Likely AI-Generated', 'Likely Human', or 'Uncertain'")
     ai_probability: float = Field(..., description="Overall AI probability [0.0 - 1.0]")
+    ai_risk_score: Optional[float] = Field(None, description="Calibrated AI Risk Score [0.0 - 1.0]")
     confidence: float = Field(..., description="Confidence score [0.0 - 1.0]")
+    outcome_type: Optional[str] = Field(None, description="Multilevel outcome category")
+    consistency_rating: Optional[str] = Field(None, description="Cross-layer evidence consistency rating")
     media_type: str = Field("audio", description="Detected media category ('audio', 'image', 'video')")
     status: str = Field("success", description="Execution status")
     demo_mode: bool = Field(False, description="True if operating in demo presentation mode")
