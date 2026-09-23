@@ -22,6 +22,17 @@ def test_image_detector():
         assert details["status"] == "configured"
         assert "fft_spectral_score" in details
         assert "ela_compression_score" in details
+        assert "heatmap_url" in details
+        assert isinstance(details["heatmap_url"], str)
     finally:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
+
+
+def test_video_detector():
+    from backend.models.video_detector import VideoDetector
+    detector = VideoDetector()
+    # Test gracefully returning 0.5 error when non-existent video is passed
+    score, details = detector.analyze("non_existent_video.mp4")
+    assert score == 0.5
+    assert details["status"] == "error"

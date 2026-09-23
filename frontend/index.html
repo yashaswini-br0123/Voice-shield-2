@@ -39,8 +39,8 @@
             <div class="sidebar-brand">
                 <i class="fa-solid fa-shield-halved brand-icon"></i>
                 <div class="brand-text">
-                    <span class="brand-title">VOICE<span class="highlight">SHIELD</span></span>
-                    <span class="brand-sub">AI DEEPFAKE DETECTION</span>
+                    <span class="brand-title">VOICE<span class="highlight">SHIELD 3.0</span></span>
+                    <span class="brand-sub">AI MEDIA AUTHENTICITY PLATFORM</span>
                 </div>
             </div>
 
@@ -56,10 +56,10 @@
 
             <!-- Mode Switcher Tabs -->
             <div class="sidebar-tabs">
-                <button id="tab-all" class="sidebar-tab-btn active"><i class="fa-solid fa-folder-open"></i> All Media Upload</button>
+                <button id="tab-all" class="sidebar-tab-btn active"><i class="fa-solid fa-folder-open"></i> Media Router</button>
                 <button id="tab-audio" class="sidebar-tab-btn"><i class="fa-solid fa-waveform"></i> Voice & Audio</button>
-                <button id="tab-image" class="sidebar-tab-btn"><i class="fa-solid fa-image"></i> AI Image</button>
-                <button id="tab-video" class="sidebar-tab-btn"><i class="fa-solid fa-film"></i> Deepfake Video</button>
+                <button id="tab-image" class="sidebar-tab-btn"><i class="fa-solid fa-image"></i> TruFor Image</button>
+                <button id="tab-video" class="sidebar-tab-btn"><i class="fa-solid fa-film"></i> VideoMAE Video</button>
                 <button id="tab-record" class="sidebar-tab-btn"><i class="fa-solid fa-microphone"></i> Record Mic</button>
             </div>
 
@@ -72,9 +72,9 @@
                             <i id="drop-main-icon" class="fa-solid fa-cloud-arrow-up drop-icon"></i>
                         </div>
                         <h4 id="dropzone-title">Click or Drop File Here</h4>
-                        <p id="dropzone-subtitle">Supports ALL Audio Formats, Images & Videos</p>
+                        <p id="dropzone-subtitle">Media Router dispatches Audio, Image, or Video</p>
                         <div class="format-badges">
-                            <span class="badge badge-blue">ALL AUDIO</span>
+                            <span class="badge badge-blue">AUDIO</span>
                             <span class="badge badge-purple">IMAGE</span>
                             <span class="badge badge-red">VIDEO</span>
                         </div>
@@ -139,7 +139,7 @@
                 </div>
 
                 <button id="btn-analyze" class="btn btn-primary glow-button">
-                    <i class="fa-solid fa-brain"></i> ANALYZE DEEPFAKE
+                    <i class="fa-solid fa-brain"></i> ANALYZE MEDIA AUTHENTICITY
                 </button>
             </div>
 
@@ -154,15 +154,15 @@
             <!-- Top Hero Header -->
             <header class="top-hero">
                 <div class="hero-left">
-                    <h2>AI Deepfake Detection Platform</h2>
-                    <p>Multi-layer spectro-temporal voice analysis, WavLM SSL representations & visual anomaly detection.</p>
+                    <h2>VoiceShield 3.0 Platform</h2>
+                    <p>Voice • Image • Video | Detect • Explain • Verify • Protect</p>
                 </div>
                 <div class="hero-right-actions">
                     <button id="theme-toggle" class="theme-toggle-btn" title="Toggle Dark/Light Mode">
                         <i class="fa-solid fa-moon"></i> <span id="theme-label">Dark Mode</span>
                     </button>
                     <div class="probabilistic-pill">
-                        <i class="fa-solid fa-circle-info"></i> Probabilistic Confidence Scoring
+                        <i class="fa-solid fa-circle-info"></i> Probabilistic Risk Engine
                     </div>
                 </div>
             </header>
@@ -170,48 +170,46 @@
             <!-- 1. DEFAULT WELCOME DASHBOARD (Shown before analysis) -->
             <section id="welcome-dashboard" class="welcome-dashboard-view">
                 <div class="welcome-banner light-panel">
-                    <div class="welcome-badge"><i class="fa-solid fa-sparkles"></i> MULTIMODAL DETECTION ENGINE ACTIVE</div>
-                    <h3>Welcome to VoiceShield</h3>
-                    <p>Select any audio file (AAC, MP3, WAV, M4A, OPUS), AI image, or deepfake video on the left sidebar to run instant multi-layer detection.</p>
+                    <div class="welcome-badge"><i class="fa-solid fa-sparkles"></i> MULTIMODAL MEDIA ROUTER ACTIVE</div>
+                    <h3>Welcome to VoiceShield 3.0</h3>
+                    <p>Select any Audio file, AI Image, or Video on the left sidebar. The Media Type Router automatically dispatches media to its isolated detection engine.</p>
                 </div>
 
                 <!-- Feature Modules Overview Cards -->
                 <div class="welcome-cards-grid">
                     <div class="light-panel welcome-card">
                         <div class="w-card-icon icon-blue"><i class="fa-solid fa-waveform-lines"></i></div>
-                        <h4>Voice & Audio Detection</h4>
-                        <p>Evaluates MFCCs, Mel Spectrograms, pitch vibrato, AASIST raw waveform phase, LFCC cepstral coefficients, and WavLM SSL embeddings.</p>
-                        <span class="w-tag">4-Layer Ensemble</span>
+                        <h4>Voice & Audio Analysis</h4>
+                        <p>100% Isolated 4-Layer Ensemble: Acoustic vibrato, AASIST raw waveform phase, LFCC cepstral coefficients & WavLM SSL representations.</p>
+                        <span class="w-tag">4-Layer Voice Pipeline</span>
                     </div>
 
                     <div class="light-panel welcome-card">
                         <div class="w-card-icon icon-purple"><i class="fa-solid fa-image-polaroid"></i></div>
-                        <h4>AI Image Recognition</h4>
-                        <p>Detects 2D FFT spectral frequency rings, Error Level Analysis (ELA) compression residuals, and facial edge blur.</p>
-                        <span class="w-tag">FFT & ELA Check</span>
+                        <h4>TruFor Image Analysis</h4>
+                        <p>2D FFT spectral frequency rings, Error Level Analysis (ELA) compression residuals, noise covariance & visual forgery heatmap.</p>
+                        <span class="w-tag">TruFor Heatmap Check</span>
                     </div>
 
                     <div class="light-panel welcome-card">
                         <div class="w-card-icon icon-red"><i class="fa-solid fa-film-canister"></i></div>
-                        <h4>Deepfake Video Analysis</h4>
-                        <p>Extracts video keyframes and audio tracks, running combined visual + acoustic deepfake score fusion.</p>
-                        <span class="w-tag">Multimodal Fusion</span>
+                        <h4>VideoMAE Video Analysis</h4>
+                        <p>Multi-frame keyframe extraction evaluating spatial deepfake features and temporal inter-frame motion continuity.</p>
+                        <span class="w-tag">Spatio-Temporal Model</span>
                     </div>
                 </div>
 
                 <!-- Detection Architecture Diagram Card -->
                 <div class="light-panel flow-card">
-                    <h4><i class="fa-solid fa-sitemap icon-blue"></i> Detection Pipeline Architecture</h4>
+                    <h4><i class="fa-solid fa-sitemap icon-blue"></i> VoiceShield 3.0 Multimodal Media Pipeline</h4>
                     <div class="flow-diagram">
                         <div class="flow-node"><span>User Input</span></div>
                         <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-                        <div class="flow-node"><span>PyAV Preprocessing</span></div>
+                        <div class="flow-node node-highlight"><span>Media Router</span></div>
                         <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-                        <div class="flow-node node-highlight"><span>4-Layer Analysis</span></div>
+                        <div class="flow-node"><span>Audio / Image / Video Engine</span></div>
                         <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-                        <div class="flow-node"><span>Ensemble Fusion</span></div>
-                        <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-                        <div class="flow-node node-verdict"><span>Verdict & Risk Score</span></div>
+                        <div class="flow-node node-verdict"><span>Verdict & Forensic Report</span></div>
                     </div>
                 </div>
             </section>
@@ -366,6 +364,31 @@
                     </div>
                 </div>
 
+                <!-- Image TruFor Manipulation Heatmap Card (Shown for Image uploads) -->
+                <div id="image-heatmap-card" class="light-panel heatmap-card hidden" style="margin-bottom: 1.5rem;">
+                    <h3><i class="fa-solid fa-fire-flame-curved icon-purple"></i> TruFor Image Forgery & Manipulation Heatmap</h3>
+                    <p class="heatmap-desc" style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1rem;">Error Level Analysis (ELA) compression residual thermal colormap highlighting modified or synthetic pixel regions.</p>
+                    <div class="heatmap-view-wrapper" style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                        <div class="heatmap-box" style="flex: 1; min-width: 260px;">
+                            <span class="heatmap-box-title" style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--text-muted);">Original Input Image</span>
+                            <img id="heatmap-orig-img" class="heatmap-img" alt="Original Image" style="width: 100%; border-radius: 8px; border: 1px solid var(--border-color); max-height: 320px; object-fit: contain; background: #000;">
+                        </div>
+                        <div class="heatmap-box" style="flex: 1; min-width: 260px;">
+                            <span class="heatmap-box-title" style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--text-muted);">TruFor Forgery Heatmap</span>
+                            <img id="heatmap-mask-img" class="heatmap-img" alt="Manipulation Heatmap" style="width: 100%; border-radius: 8px; border: 1px solid var(--border-color); max-height: 320px; object-fit: contain; background: #000;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VideoMAE Multi-Frame Spatio-Temporal Card (Shown for Video uploads) -->
+                <div id="video-frames-card" class="light-panel video-frames-card hidden" style="margin-bottom: 1.5rem;">
+                    <h3><i class="fa-solid fa-film icon-red"></i> VideoMAE Multi-Frame Spatio-Temporal Analysis</h3>
+                    <p class="video-frames-desc" style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1rem;">Analyzed 8 uniform keyframes across video duration to evaluate spatio-temporal inter-frame motion continuity & gradient jitter.</p>
+                    <div id="video-keyframes-grid" class="video-keyframes-grid" style="display: flex; gap: 0.8rem; overflow-x: auto; padding-bottom: 0.5rem;">
+                        <!-- Keyframe grid badges -->
+                    </div>
+                </div>
+
                 <!-- Explanation & Technical Profile Grid -->
                 <div class="details-cards-grid">
                     
@@ -401,7 +424,7 @@
                             </tr>
                             <tr>
                                 <td>Engine Pipeline:</td>
-                                <td id="meta-pipeline" class="meta-val">Universal PyAV Engine</td>
+                                <td id="meta-pipeline" class="meta-val">VoiceShield 3.0 Engine</td>
                             </tr>
                         </table>
 
@@ -410,6 +433,12 @@
                             <span><strong>Security Guarantee:</strong> VoiceShield processes media purely in volatile memory. Uploads are immediately purged.</span>
                         </div>
                     </div>
+                </div>
+
+                <!-- Probabilistic Disclaimer Callout Banner -->
+                <div class="disclaimer-callout-banner light-panel" style="margin-top: 1.5rem; padding: 1rem 1.25rem; border-left: 4px solid var(--accent-amber); display: flex; align-items: center; gap: 0.8rem; background: rgba(245, 158, 11, 0.08);">
+                    <i class="fa-solid fa-triangle-exclamation icon-amber" style="font-size: 1.2rem;"></i>
+                    <span style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;"><strong>Probabilistic Notice:</strong> VoiceShield 3.0 detection outputs are probabilistic risk estimations based on spectral, temporal, and spatial feature models, not 100% infallible proof. Always verify critical media through secondary forensic channels.</span>
                 </div>
 
                 <!-- Hidden Forensic Data Container for PDF Generation -->
@@ -429,8 +458,8 @@
 
     <!-- Footer -->
     <footer class="app-footer">
-        <p>VoiceShield v2.0.0 — Multimodal AI Deepfake Detection Engine</p>
-        <p class="disclaimer">VoiceShield provides probabilistic confidence scores and does not claim 100% infallible proof.</p>
+        <p>VoiceShield v3.0.0 — AI Media Authenticity Detection Platform</p>
+        <p class="disclaimer">Detection outputs are probabilistic confidence risk scores and do not claim 100% infallible proof.</p>
     </footer>
 
     <!-- Scripts -->

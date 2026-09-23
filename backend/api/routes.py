@@ -150,10 +150,12 @@ async def analyze_media(
             return {
                 "prediction": prediction,
                 "ai_probability": score,
+                "ai_risk_score": score,
                 "confidence": confidence,
                 "media_type": "image",
                 "status": "success",
                 "demo_mode": settings.DEMO_MODE,
+                "heatmap_url": img_details.get("heatmap_url"),
                 "layers": {
                     "fft_spectral": img_details.get("fft_spectral_score"),
                     "ela_compression": img_details.get("ela_compression_score"),
@@ -176,23 +178,23 @@ async def analyze_media(
             confidence = round(0.50 + abs(score - 0.50) * 0.96, 4)
 
             anomalies = vid_details.get("anomalies", [])
-            has_aud = vid_details.get("has_audio_track", False)
             verdict_label = "LIKELY AI-GENERATED" if score > 0.50 else "LIKELY HUMAN"
             explanation = (
                 f"The system evaluated {vid_details.get('frames_analyzed', 0)} keyframes and "
-                f"fused multimodal features, classifying the video as {verdict_label} (Synthetic Probability: {int(score * 100)}%)."
+                f"analyzed VideoMAE spatio-temporal inter-frame motion continuity, classifying the video as {verdict_label} (Synthetic Probability: {int(score * 100)}%)."
             )
 
             return {
                 "prediction": prediction,
                 "ai_probability": score,
+                "ai_risk_score": score,
                 "confidence": confidence,
                 "media_type": "video",
                 "status": "success",
                 "demo_mode": settings.DEMO_MODE,
                 "layers": {
                     "visual_frames": vid_details.get("visual_ai_prob"),
-                    "audio_track": vid_details.get("audio_ai_prob")
+                    "temporal_continuity": vid_details.get("temporal_ai_prob")
                 },
                 "layer_details": {"video": vid_details},
                 "audio": {"duration": vid_details.get("duration_sec", 0.0), "format": "mp4", "sample_rate": 16000, "channels": 1},

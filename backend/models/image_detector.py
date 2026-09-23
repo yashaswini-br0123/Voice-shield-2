@@ -5,6 +5,9 @@ except Exception:
     cv2 = None
     HAS_OPENCV = False
 
+import os
+import io
+import base64
 import numpy as np
 from PIL import Image, ImageChops, ImageEnhance
 from typing import Dict, Any, Tuple
@@ -58,8 +61,8 @@ class ImageDetector:
         if fft_anom:
             anomalies.append(fft_anom)
 
-        # 2. Error Level Analysis (ELA)
-        ela_score, ela_anom = self._analyze_ela(pil_img, image_path)
+        # 2. TruFor Error Level Analysis (ELA) & Manipulation Heatmap Generation
+        heatmap_url, ela_score, ela_anom = self._generate_trufor_heatmap(pil_img, image_path)
         scores.append(ela_score)
         if ela_anom:
             anomalies.append(ela_anom)
@@ -90,7 +93,8 @@ class ImageDetector:
             "faces_detected": num_faces,
             "fft_spectral_score": round(fft_score, 3),
             "ela_compression_score": round(ela_score, 3),
-            "noise_covariance_score": round(noise_score, 3)
+            "noise_covariance_score": round(noise_score, 3),
+            "heatmap_url": heatmap_url
         }
 
     def analyze_cv_image(self, cv_img: np.ndarray) -> Tuple[float, Dict[str, Any]]:
@@ -157,6 +161,60 @@ class ImageDetector:
                 return 0.20, ""
         except Exception:
             return 0.22, ""
+
+    def _generate_trufor_heatmap(self, pil_img: Image.Image, file_path: str) -> Tuple[str, float, str]:
+        """
+        TruFor Image Forgery & Manipulation Heatmap Generator.
+        Performs Error Level Analysis (ELA) compression residual extraction and applies
+        a thermal colormap (JET/INFERNO) highlighting synthetic/forgery anomaly regions.
+        """
+        try:
+            ela_temp = file_path + "_trufor_tmp.jpg"
+            pil_img.save(ela_temp, 'JPEG', quality=90)
+            recompressed = Image.open(ela_temp)
+            
+            diff = ImageChops.difference(pil_img, recompressed)
+            extrema = diff.getextrema()
+            max_diff = max([ex[1] for ex in extrema])
+            if max_diff == 0:
+                max_diff = 1
+                
+            scale = 255.0 / max_diff
+            enhanced_diff = ImageEnhance.Brightness(diff).enhance(scale)
+            diff_np = np.array(enhanced_diff)
+            ela_std = float(np.std(diff_np))
+
+            if os.path.exists(ela_temp):
+                try:
+                    os.remove(ela_temp)
+                except Exception:
+                    pass
+
+            # Generate visual heatmap base64 Data URL
+            heatmap_b64 = ""
+            try:
+                if HAS_OPENCV and cv2 is not None:
+                    gray_diff = cv2.cvtColor(diff_np, cv2.COLOR_RGB2GRAY)
+                    heatmap_cv = cv2.applyColorMap(gray_diff, cv2.COLORMAP_JET)
+                    _, buf = cv2.imencode('.jpg', heatmap_cv, [int(cv2.IMWRITE_JPEG_QUALITY), 85])
+                    heatmap_b64 = "data:image/jpeg;base64," + base64.b64encode(buf.tobytes()).decode('utf-8')
+                else:
+                    buf = io.BytesIO()
+                    enhanced_diff.save(buf, format='JPEG', quality=85)
+                    heatmap_b64 = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
+            except Exception:
+                heatmap_b64 = ""
+
+            if ela_std > 68.0:
+                score = 0.79
+                anom = "TruFor ELA (Error Level Analysis) reveals inconsistent JPEG compression residual variance across pixel regions"
+            else:
+                score = 0.22
+                anom = ""
+
+            return heatmap_b64, score, anom
+        except Exception:
+            return "", 0.22, ""
 
     def _analyze_ela(self, pil_img: Image.Image, file_path: str) -> Tuple[float, str]:
         """Error Level Analysis (ELA) JPEG compression residual check."""

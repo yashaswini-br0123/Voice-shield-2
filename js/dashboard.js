@@ -360,6 +360,53 @@ class DashboardManager {
         document.getElementById('gauge-fill').style.width = `${aiPct}%`;
         document.getElementById('confidence-score').textContent = `${confPct}%`;
 
+        // Render Heatmap or Video Frame cards based on media_type
+        const heatmapCard = document.getElementById('image-heatmap-card');
+        const videoFramesCard = document.getElementById('video-frames-card');
+        
+        if (mediaType === "image") {
+            if (videoFramesCard) videoFramesCard.classList.add('hidden');
+            if (heatmapCard) {
+                heatmapCard.classList.remove('hidden');
+                const origImg = document.getElementById('heatmap-orig-img');
+                const maskImg = document.getElementById('heatmap-mask-img');
+                const imgDet = (data.layer_details && data.layer_details.image) || {};
+                
+                const currentPreviewSrc = document.getElementById('image-player')?.src;
+                if (origImg && currentPreviewSrc) origImg.src = currentPreviewSrc;
+                
+                const heatmapData = data.heatmap_url || imgDet.heatmap_url;
+                if (maskImg && heatmapData) {
+                    maskImg.src = heatmapData;
+                } else if (maskImg && currentPreviewSrc) {
+                    maskImg.src = currentPreviewSrc;
+                }
+            }
+        } else if (mediaType === "video") {
+            if (heatmapCard) heatmapCard.classList.add('hidden');
+            if (videoFramesCard) {
+                videoFramesCard.classList.remove('hidden');
+                const grid = document.getElementById('video-keyframes-grid');
+                const vidDet = (data.layer_details && data.layer_details.video) || {};
+                const frameScores = vidDet.frame_scores || [vidDet.visual_ai_prob || 0.5];
+                
+                if (grid) {
+                    grid.innerHTML = '';
+                    frameScores.forEach((fScore, idx) => {
+                        const badge = document.createElement('div');
+                        const fPct = Math.round(fScore * 100);
+                        const isAnom = fScore > 0.50;
+                        badge.style.cssText = `padding: 0.6rem 0.8rem; border-radius: 8px; font-size: 0.8rem; background: ${isAnom ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)'}; border: 1px solid ${isAnom ? '#ef4444' : '#10b981'}; min-width: 100px; text-align: center;`;
+                        badge.innerHTML = `<span style="display:block; font-weight:700; color:${isAnom ? '#ef4444' : '#10b981'};">Frame ${idx+1}</span><span style="font-size:0.75rem; color:var(--text-muted);">${fPct}% AI Risk</span>`;
+                        grid.appendChild(badge);
+                    });
+                }
+            }
+        } else {
+            if (heatmapCard) heatmapCard.classList.add('hidden');
+            if (videoFramesCard) videoFramesCard.classList.add('hidden');
+        }
+
         // Adapt Layer Cards
         this._updateLayerCards(data);
 
@@ -383,7 +430,7 @@ class DashboardManager {
 
         // Technical Profile Metadata
         document.getElementById('meta-category').textContent = mediaType.toUpperCase();
-        document.getElementById('meta-duration').textContent = data.audio ? `${data.audio.duration || 'N/A'}s` : (data.layer_details.image ? data.layer_details.image.dimensions : 'N/A');
+        document.getElementById('meta-duration').textContent = data.audio ? `${data.audio.duration || 'N/A'}s` : (data.layer_details.image ? data.layer_details.image.dimensions : (data.layer_details.video ? `${data.layer_details.video.duration_sec}s` : 'N/A'));
         document.getElementById('meta-time').textContent = `${data.processing_time_sec}s`;
         document.getElementById('meta-pipeline').textContent = isUncertain ? "RESULT: UNCERTAIN (REQUIRES VERIFICATION)" : (isAI ? "RESULT: LIKELY AI-GENERATED" : "RESULT: LIKELY HUMAN");
 
@@ -423,16 +470,16 @@ class DashboardManager {
         if (mediaType === "image") {
             const imgDet = data.layer_details.image || {};
             dimensions = [
-                { name: "2D FFT Frequency Spectral Grid", score: imgDet.fft_spectral_score },
-                { name: "Error Level Analysis (ELA) Compression", score: imgDet.ela_compression_score },
-                { name: "Pixel Noise Covariance & Edge Consistency", score: imgDet.noise_covariance_score }
+                { name: "TruFor 2D FFT Frequency Spectral Grid", score: imgDet.fft_spectral_score },
+                { name: "TruFor ELA Compression Residual Heatmap", score: imgDet.ela_compression_score },
+                { name: "TruFor Pixel Noise & Face Edge Blur", score: imgDet.noise_covariance_score }
             ];
         } else if (mediaType === "video") {
             const vidDet = data.layer_details.video || {};
             dimensions = [
-                { name: "Visual Keyframe Spatial Artifacts", score: vidDet.visual_ai_prob },
-                { name: "Extracted Audio Track Deepfake Analysis", score: vidDet.audio_ai_prob },
-                { name: "Multimodal Temporal Score Fusion", score: data.ai_probability }
+                { name: "VideoMAE Multi-Frame Visual Keyframes", score: vidDet.visual_ai_prob },
+                { name: "VideoMAE Inter-Frame Motion Continuity", score: vidDet.temporal_ai_prob },
+                { name: "VideoMAE Spatio-Temporal Score Fusion", score: data.ai_probability }
             ];
         } else {
             const wavlmDet = (data.layer_details && data.layer_details.wavlm) || {};
@@ -479,22 +526,26 @@ class DashboardManager {
 
     _updateLayerCards(data) {
         const mediaType = data.media_type || "audio";
+        const card4 = document.querySelector('.layer-cards-grid .layer-card:nth-child(4)');
 
         if (mediaType === "image") {
             const imgDet = data.layer_details.image || {};
+            if (card4) card4.style.display = 'none';
             
-            this._setCard(1, "FEATURE 1", "2D FFT Spectral", "Frequency spectrum grid ring analysis for diffusion/GAN artifacts.", imgDet.fft_spectral_score);
-            this._setCard(2, "FEATURE 2", "ELA Compression", "Error Level Analysis JPEG compression residual variance check.", imgDet.ela_compression_score);
-            this._setCard(3, "FEATURE 3", "Noise & Facial Edges", "Pixel noise covariance and facial boundary gradient consistency.", imgDet.noise_covariance_score);
+            this._setCard(1, "FEATURE 1", "TruFor 2D FFT Spectral", "Frequency spectrum grid ring analysis for diffusion/GAN grid artifacts.", imgDet.fft_spectral_score);
+            this._setCard(2, "FEATURE 2", "TruFor ELA Heatmap", "Error Level Analysis JPEG compression residual heatmap check.", imgDet.ela_compression_score);
+            this._setCard(3, "FEATURE 3", "TruFor Noise & Facial Edges", "Pixel noise covariance and facial boundary gradient consistency.", imgDet.noise_covariance_score);
 
         } else if (mediaType === "video") {
             const vidDet = data.layer_details.video || {};
+            if (card4) card4.style.display = 'none';
 
-            this._setCard(1, "COMPONENT 1", "Visual Keyframes", "Frame-by-frame 2D FFT & ELA keyframe analysis across sampled frames.", vidDet.visual_ai_prob);
-            this._setCard(2, "COMPONENT 2", "Audio Track Deepfake", "3-Layer spectro-temporal audio deepfake analysis of extracted audio.", vidDet.audio_ai_prob);
-            this._setCard(3, "COMPONENT 3", "Multimodal Fusion", "Combined Visual + Audio deepfake probability score.", data.ai_probability);
+            this._setCard(1, "COMPONENT 1", "VideoMAE Visual Keyframes", "Frame-by-frame 2D FFT & ELA keyframe analysis across 8 sampled frames.", vidDet.visual_ai_prob);
+            this._setCard(2, "COMPONENT 2", "VideoMAE Temporal Motion", "Inter-frame motion continuity & Laplacian gradient jitter evaluation.", vidDet.temporal_ai_prob);
+            this._setCard(3, "COMPONENT 3", "Spatio-Temporal Fusion", "Combined Visual + Inter-frame Temporal motion deepfake probability score.", data.ai_probability);
 
         } else {
+            if (card4) card4.style.display = 'block';
             const l1 = data.layers.acoustic;
             const l2 = data.layers.waveform;
             const l3 = data.layers.spectral;

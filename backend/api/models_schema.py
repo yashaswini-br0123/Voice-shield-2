@@ -18,6 +18,7 @@ class DetectionResponseSchema(BaseModel):
     explanation: str = Field(..., description="Human-readable explanation of verdict")
     processing_time_sec: float = Field(..., description="Processing duration in seconds")
     anomalies: List[str] = Field(default_factory=list, description="Detected spectro-temporal or visual anomalies")
+    heatmap_url: Optional[str] = Field(None, description="TruFor ELA visual manipulation heatmap Data URL")
 
 
 class HealthResponseSchema(BaseModel):
