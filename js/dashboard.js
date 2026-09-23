@@ -1,5 +1,48 @@
+class ThemeManager {
+    constructor() {
+        this.themeToggleBtn = document.getElementById('theme-toggle');
+        this.themeLabel = document.getElementById('theme-label');
+        this.init();
+    }
+
+    init() {
+        const savedTheme = localStorage.getItem('voiceshield_theme') || 'light';
+        this.setTheme(savedTheme);
+
+        if (this.themeToggleBtn) {
+            this.themeToggleBtn.addEventListener('click', () => {
+                const isDark = document.body.classList.contains('dark-theme');
+                this.setTheme(isDark ? 'light' : 'dark');
+            });
+        }
+    }
+
+    setTheme(theme) {
+        if (theme === 'dark') {
+            document.body.classList.remove('light-theme');
+            document.body.classList.add('dark-theme');
+            if (this.themeLabel) this.themeLabel.textContent = 'Light Mode';
+            if (this.themeToggleBtn) {
+                const icon = this.themeToggleBtn.querySelector('i');
+                if (icon) icon.className = 'fa-solid fa-sun';
+            }
+            localStorage.setItem('voiceshield_theme', 'dark');
+        } else {
+            document.body.classList.remove('dark-theme');
+            document.body.classList.add('light-theme');
+            if (this.themeLabel) this.themeLabel.textContent = 'Dark Mode';
+            if (this.themeToggleBtn) {
+                const icon = this.themeToggleBtn.querySelector('i');
+                if (icon) icon.className = 'fa-solid fa-moon';
+            }
+            localStorage.setItem('voiceshield_theme', 'light');
+        }
+    }
+}
+
 class DashboardManager {
     constructor() {
+        this.themeManager = new ThemeManager();
         this.welcomeDashboard = document.getElementById('welcome-dashboard');
         this.progressSection = document.getElementById('analysis-progress-section');
         this.errorDisplay = document.getElementById('error-display-card');

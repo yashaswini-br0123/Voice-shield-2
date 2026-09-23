@@ -53,6 +53,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const backendPill = document.getElementById('backend-status');
     const demoPill = document.getElementById('demo-status');
 
+    // 0. Cybersecurity Intro Splash Auto-Dismiss
+    const splash = document.getElementById('intro-splash');
+    if (splash) {
+        setTimeout(() => {
+            splash.classList.add('fade-out');
+            setTimeout(() => splash.remove(), 500);
+        }, 1800);
+    }
+
     // 1. Health Check
     checkBackendHealth();
 

@@ -36,7 +36,12 @@ class SpectralDetector:
         """
         Extracts 80-dimensional LFCC feature vector and predicts synthetic probability.
         """
-        lfcc_vec = extract_lfcc_features(audio, sr=sr)
+        # Active speech extraction
+        active_speech = audio[np.abs(audio) > 0.02]
+        if len(active_speech) < 1600:
+            active_speech = audio
+
+        lfcc_vec = extract_lfcc_features(active_speech, sr=sr)
         
         if self.is_loaded and self.classifier is not None:
             try:
@@ -63,7 +68,7 @@ class SpectralDetector:
         lfcc_mean = lfcc_vec[:20]
         lfcc_std = lfcc_vec[20:40]
         
-        # Lower/mid order LFCC cepstral std across frames (natural human speech formants vary dynamically > 0.4)
+        # Lower/mid order LFCC cepstral std across frames (natural human speech formants vary dynamically > 0.30)
         low_mid_var = float(np.mean(lfcc_std[1:10])) if len(lfcc_std) >= 10 else 1.0
         if low_mid_var < 0.20:
             score = 0.84

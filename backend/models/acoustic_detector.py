@@ -18,7 +18,11 @@ class AcousticDetector:
         Runs acoustic feature extraction and computes synthetic voice probability [0.0 - 1.0].
         Returns probability score and technical acoustic findings breakdown.
         """
-        features = extract_acoustic_features(audio, sr)
+        active_speech = audio[np.abs(audio) > 0.02]
+        if len(active_speech) < 1600:
+            active_speech = audio
+
+        features = extract_acoustic_features(active_speech, sr)
         
         # Calculate anomaly scores based on acoustic inconsistency heuristics
         anomaly_reasons = []

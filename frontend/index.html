@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VoiceShield - Multimodal AI Deepfake Detection Engine</title>
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="static/css/styles.css">
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
@@ -14,6 +13,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
 </head>
 <body class="light-theme">
+
+    <!-- 0. CYBERSECURITY INTRO SPLASH SCREEN -->
+    <div id="intro-splash" class="intro-splash-overlay">
+        <div class="splash-content">
+            <div class="splash-logo-wrapper">
+                <i class="fa-solid fa-shield-halved splash-icon"></i>
+                <div class="splash-pulse"></div>
+            </div>
+            <h1 class="splash-title">VOICE<span class="highlight">SHIELD</span></h1>
+            <p class="splash-subtitle">MULTIMODAL AI DEEPFAKE DETECTION PLATFORM</p>
+            <div class="splash-loading-bar">
+                <div class="splash-bar-fill"></div>
+            </div>
+        </div>
+    </div>
 
     <!-- App Layout Grid: Left Sidebar Dashboard + Right Main View -->
     <div class="app-layout">
@@ -138,11 +152,16 @@
             <!-- Top Hero Header -->
             <header class="top-hero">
                 <div class="hero-left">
-                    <h2>AI Deepfake Detection Platform</h2>
+                    2<h2>AI Deepfake Detection Platform</h2>
                     <p>Multi-layer spectro-temporal voice analysis & visual anomaly detection.</p>
                 </div>
-                <div class="probabilistic-pill">
-                    <i class="fa-solid fa-circle-info"></i> Probabilistic Confidence Scoring
+                <div class="hero-right-actions">
+                    <button id="theme-toggle" class="theme-toggle-btn" title="Toggle Dark/Light Mode">
+                        <i class="fa-solid fa-moon"></i> <span id="theme-label">Dark Mode</span>
+                    </button>
+                    <div class="probabilistic-pill">
+                        <i class="fa-solid fa-circle-info"></i> Probabilistic Confidence Scoring
+                    </div>
                 </div>
             </header>
 
@@ -448,9 +467,5 @@
     <script src="js/recorder.js"></script>
     <script src="js/dashboard.js"></script>
     <script src="js/app.js"></script>
-    <script src="static/js/visualizer.js"></script>
-    <script src="static/js/recorder.js"></script>
-    <script src="static/js/dashboard.js"></script>
-    <script src="static/js/app.js"></script>
 </body>
 </html>
