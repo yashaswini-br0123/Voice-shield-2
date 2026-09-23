@@ -73,8 +73,13 @@ class ImageDetector:
         if edge_anom:
             anomalies.append(edge_anom)
 
-        # Dual-Domain Fusion: Mean across SpecXNet spatial and spectral feature heads
-        raw_score = float(np.mean(scores))
+        # SpecXNet Max-Anomaly Weighted Fusion: Prioritize strong synthetic anomaly signatures
+        max_s = max(scores) if scores else 0.12
+        mean_s = float(np.mean(scores)) if scores else 0.12
+        if max_s > 0.60:
+            raw_score = 0.75 * max_s + 0.25 * mean_s
+        else:
+            raw_score = mean_s
         ai_prob = max(0.05, min(0.95, round(raw_score, 4)))
 
         width, height = pil_img.size
@@ -129,7 +134,12 @@ class ImageDetector:
         scores.append(edge_score)
         if edge_anom: anomalies.append(edge_anom)
 
-        raw_score = float(np.mean(scores))
+        max_s = max(scores) if scores else 0.12
+        mean_s = float(np.mean(scores)) if scores else 0.12
+        if max_s > 0.60:
+            raw_score = 0.75 * max_s + 0.25 * mean_s
+        else:
+            raw_score = mean_s
         ai_prob = max(0.05, min(0.95, round(raw_score, 4)))
 
         w, h = pil_img.size

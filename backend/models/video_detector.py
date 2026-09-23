@@ -164,8 +164,13 @@ class VideoDetector:
                 temporal_anomaly_score = 0.79
                 frame_anomalies.append("FakeSTormer Spatio-Temporal analysis detects unnaturally static temporal inter-frame smoothness typical of AI video diffusion generators")
 
-        # Combine spatial keyframe average (60%) with temporal continuity score (40%)
-        raw_video_score = 0.60 * visual_spatial_prob + 0.40 * temporal_anomaly_score
+        # FakeSTormer Max-Anomaly Weighted Fusion: Prioritize strong spatio-temporal AI signatures
+        max_vid_s = max(visual_spatial_prob, temporal_anomaly_score)
+        mean_vid_s = 0.60 * visual_spatial_prob + 0.40 * temporal_anomaly_score
+        if max_vid_s > 0.60:
+            raw_video_score = 0.75 * max_vid_s + 0.25 * mean_vid_s
+        else:
+            raw_video_score = mean_vid_s
         final_video_score = max(0.08, min(0.92, round(raw_video_score, 4)))
 
         return final_video_score, {
