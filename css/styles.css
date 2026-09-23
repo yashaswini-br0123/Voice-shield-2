@@ -786,12 +786,14 @@ body.light-theme {
     align-items: baseline;
     gap: 0.4rem;
     margin-bottom: 0.4rem;
+    flex-wrap: wrap;
 }
 .layer-score {
     font-family: var(--font-heading);
-    font-size: 1.7rem;
+    font-size: 1.45rem;
     font-weight: 700;
     color: var(--text-primary);
+    white-space: nowrap;
 }
 .layer-score-sub {
     font-size: 0.75rem;
@@ -815,6 +817,10 @@ body.light-theme {
     padding: 0.25rem 0.5rem;
     border-radius: 4px;
     display: inline-block;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Explanation & Metadata Grid */

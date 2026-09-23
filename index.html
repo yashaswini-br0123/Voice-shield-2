@@ -65,6 +65,34 @@
 
             <!-- Upload Dropzone Container -->
             <div id="view-upload" class="sidebar-upload-view">
+                <!-- Multimodal Preview Card (Shown when file is selected) -->
+                <div id="media-preview-card" class="preview-card hidden" style="margin-bottom: 1rem;">
+                    <div class="preview-header">
+                        <div class="file-info">
+                            <i id="preview-type-icon" class="fa-solid fa-file-audio file-icon"></i>
+                            <div style="overflow: hidden;">
+                                <div id="preview-filename" class="preview-filename">sample.wav</div>
+                                <div id="preview-meta" class="preview-meta">Audio File</div>
+                            </div>
+                        </div>
+                        <button id="btn-clear-media" class="btn-icon" title="Remove"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+
+                    <div id="audio-preview-container" class="preview-container">
+                        <audio id="audio-player" controls class="audio-player"></audio>
+                    </div>
+                    <div id="image-preview-container" class="preview-container hidden">
+                        <img id="image-player" class="image-preview-element" alt="Preview">
+                    </div>
+                    <div id="video-preview-container" class="preview-container hidden">
+                        <video id="video-player" controls class="video-preview-element"></video>
+                    </div>
+
+                    <button id="btn-analyze" class="btn btn-primary glow-button" style="width: 100%;">
+                        <i class="fa-solid fa-brain"></i> ANALYZE MEDIA AUTHENTICITY
+                    </button>
+                </div>
+
                 <div id="dropzone" class="dropzone-box" style="cursor: pointer;">
                     <input type="file" id="media-file-input" accept="audio/*,video/*,image/*" hidden>
                     <div class="dropzone-content">
@@ -124,34 +152,6 @@
                     <button id="btn-start-record" class="btn btn-record"><i class="fa-solid fa-microphone"></i> Start Recording</button>
                     <button id="btn-stop-record" class="btn btn-stop hidden"><i class="fa-solid fa-square"></i> Stop Recording</button>
                 </div>
-            </div>
-
-            <!-- Multimodal Preview Card -->
-            <div id="media-preview-card" class="preview-card hidden">
-                <div class="preview-header">
-                    <div class="file-info">
-                        <i id="preview-type-icon" class="fa-solid fa-file-audio file-icon"></i>
-                        <div>
-                            <div id="preview-filename" class="preview-filename">sample.wav</div>
-                            <div id="preview-meta" class="preview-meta">Audio File</div>
-                        </div>
-                    </div>
-                    <button id="btn-clear-media" class="btn-icon" title="Remove"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-
-                <div id="audio-preview-container" class="preview-container">
-                    <audio id="audio-player" controls class="audio-player"></audio>
-                </div>
-                <div id="image-preview-container" class="preview-container hidden">
-                    <img id="image-player" class="image-preview-element" alt="Preview">
-                </div>
-                <div id="video-preview-container" class="preview-container hidden">
-                    <video id="video-player" controls class="video-preview-element"></video>
-                </div>
-
-                <button id="btn-analyze" class="btn btn-primary glow-button">
-                    <i class="fa-solid fa-brain"></i> ANALYZE MEDIA AUTHENTICITY
-                </button>
             </div>
 
             <div class="sidebar-footer-note">

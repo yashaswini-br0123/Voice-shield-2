@@ -127,11 +127,11 @@ class DashboardManager {
         // Table Header
         doc.setFillColor(37, 99, 235); // Blue header
         doc.rect(14, y, 182, 8, 'F');
-        doc.setFontSize(9);
+        doc.setFontSize(8.5);
         doc.setTextColor(255, 255, 255);
         doc.text("Detection Module / Layer", 18, y + 5.5);
-        doc.text("Metric / Representation Output", 110, y + 5.5);
-        doc.text("Status / Verdict", 160, y + 5.5);
+        doc.text("Metric / Representation Output", 92, y + 5.5);
+        doc.text("Status / Verdict", 137, y + 5.5);
 
         y += 8;
 
@@ -139,22 +139,22 @@ class DashboardManager {
             {
                 name: "Layer 1: Acoustic Analysis",
                 desc: document.getElementById('l1-score-val')?.textContent || "N/A",
-                sub: document.getElementById('l1-status')?.textContent || "Active"
+                sub: document.getElementById('l1-status')?.textContent || "Status: Active"
             },
             {
                 name: "Layer 2: Waveform & Phase (AASIST)",
                 desc: document.getElementById('l2-score-val')?.textContent || "N/A",
-                sub: document.getElementById('l2-status')?.textContent || "Active"
+                sub: document.getElementById('l2-status')?.textContent || "Status: Active"
             },
             {
                 name: "Layer 3: Spectral Analysis (LFCC)",
                 desc: document.getElementById('l3-score-val')?.textContent || "N/A",
-                sub: document.getElementById('l3-status')?.textContent || "Active"
+                sub: document.getElementById('l3-status')?.textContent || "Status: Active"
             },
             {
                 name: "Layer 4: WavLM SSL Representation",
                 desc: document.getElementById('l4-score-val')?.textContent || "768-dim",
-                sub: document.getElementById('l4-status')?.textContent || "Representation Active"
+                sub: document.getElementById('l4-status')?.textContent || "Status: Representation Active"
             }
         ];
 
@@ -164,11 +164,14 @@ class DashboardManager {
             doc.rect(14, y, 182, 10, 'FD');
 
             doc.setFont("helvetica", "normal");
-            doc.setFontSize(9);
+            doc.setFontSize(8.5);
             doc.setTextColor(15, 23, 42);
             doc.text(layer.name, 18, y + 6.5);
-            doc.text(layer.desc, 110, y + 6.5);
-            doc.text(layer.sub, 160, y + 6.5);
+            doc.text(layer.desc, 92, y + 6.5);
+            
+            // Format status cleanly and truncate if necessary to prevent overflowing box
+            const statusText = layer.sub.startsWith("Status:") ? layer.sub : `Status: ${layer.sub}`;
+            doc.text(statusText, 137, y + 6.5);
 
             y += 10;
         });

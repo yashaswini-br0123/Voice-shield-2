@@ -435,6 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
             audioContainer.classList.remove('hidden');
         }
 
+        dropzone?.classList.add('hidden');
         previewCard.classList.remove('hidden');
 
         if (autoRun) {
@@ -449,6 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
         imagePlayer.src = '';
         videoPlayer.src = '';
         previewCard.classList.add('hidden');
+        dropzone?.classList.remove('hidden');
     });
 
     // 6. Analyze Media Execution
