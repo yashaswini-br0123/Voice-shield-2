@@ -24,3 +24,5 @@ server_startup.log
 scratch/
 tmp/
 *.tmp
+
+.vercel
