@@ -178,11 +178,10 @@ class ImageDetector:
             outer_mag = magnitude[~center_mask]
             max_outer = float(np.max(outer_mag))
             mean_outer = float(np.mean(outer_mag))
-            std_outer = float(np.std(outer_mag))
 
-            spike_ratio = (max_outer - mean_outer) / (std_outer + 1e-6)
+            peak_ratio = max_outer / (mean_outer + 1.0)
 
-            if spike_ratio > 4.8:
+            if peak_ratio > 12.0:
                 return 0.84, "SpecXNet 2D Spectral FFT detects artificial high-frequency grid spikes (Diffusion/GAN signature)"
             else:
                 return 0.12, ""
