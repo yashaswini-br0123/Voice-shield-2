@@ -292,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const envelope = 0.5 + 0.5 * Math.sin(2 * Math.PI * 3.5 * t);
                 
                 // 4. Natural micro-jitter and room acoustic noise floor
-                const jitterNoise = (Math.random() - 0.5) * 0.08;
+                const jitterNoise = (Math.random() - 0.5) * 0.008;
                 
                 sampleVal = (glottal * 0.4 + formants * 0.5) * envelope + jitterNoise;
             } else {
