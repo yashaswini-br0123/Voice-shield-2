@@ -39,10 +39,10 @@ class ImageDetector:
         try:
             pil_img = Image.open(image_path).convert('RGB')
         except Exception as e:
-            return 0.20, {
+            return 0.12, {
                 "status": "error",
                 "error": f"Failed to load image: {str(e)}",
-                "score": 0.20,
+                "score": 0.12,
                 "anomalies": [f"Image load notice: {str(e)}"]
             }
 
@@ -75,7 +75,7 @@ class ImageDetector:
 
         # Dual-Domain Fusion: Mean across SpecXNet spatial and spectral feature heads
         raw_score = float(np.mean(scores))
-        ai_prob = max(0.08, min(0.92, round(raw_score, 4)))
+        ai_prob = max(0.05, min(0.95, round(raw_score, 4)))
 
         width, height = pil_img.size
 
@@ -96,21 +96,20 @@ class ImageDetector:
         """Fast in-memory analysis directly on BGR/RGB numpy array."""
         try:
             if len(cv_img.shape) == 3 and cv_img.shape[2] == 3:
-                # Convert BGR to RGB if needed
                 pil_img = Image.fromarray(cv_img[:, :, ::-1])
             else:
                 pil_img = Image.fromarray(cv_img)
             return self.analyze_pil_image(pil_img)
         except Exception:
-            return 0.20, {
+            return 0.12, {
                 "status": "configured",
-                "score": 0.20,
+                "score": 0.12,
                 "anomalies": [],
                 "dimensions": "N/A",
                 "detector": "SpecXNet Dual-Domain Architecture",
-                "fft_spectral_score": 0.20,
-                "ela_compression_score": 0.20,
-                "noise_covariance_score": 0.20
+                "fft_spectral_score": 0.12,
+                "ela_compression_score": 0.12,
+                "noise_covariance_score": 0.12
             }
 
     def analyze_pil_image(self, pil_img: Image.Image) -> Tuple[float, Dict[str, Any]]:
@@ -131,7 +130,7 @@ class ImageDetector:
         if edge_anom: anomalies.append(edge_anom)
 
         raw_score = float(np.mean(scores))
-        ai_prob = max(0.08, min(0.92, round(raw_score, 4)))
+        ai_prob = max(0.05, min(0.95, round(raw_score, 4)))
 
         w, h = pil_img.size
 
@@ -155,7 +154,6 @@ class ImageDetector:
             gray_img = pil_img.convert('L').resize((512, 512))
             img_np = np.array(gray_img, dtype=np.float32)
 
-            # Pure NumPy 2D FFT
             fft = np.fft.fft2(img_np)
             fft_shift = np.fft.fftshift(fft)
             magnitude_spectrum = 20 * np.log(np.abs(fft_shift) + 1e-6)
@@ -172,14 +170,14 @@ class ImageDetector:
 
             ratio = float(outer_energy / (center_energy + 1e-6))
 
-            if ratio > 0.78:
-                return 0.82, "SpecXNet 2D Spectral FFT detects artificial high-frequency grid artifacts (Diffusion/GAN signature)"
-            elif ratio < 0.15:
-                return 0.76, "SpecXNet 2D Spectral FFT identifies oversmoothed high-frequency roll-off typical of AI generators"
+            if ratio > 0.88:
+                return 0.84, "SpecXNet 2D Spectral FFT detects artificial high-frequency grid artifacts (Diffusion/GAN signature)"
+            elif ratio < 0.10:
+                return 0.78, "SpecXNet 2D Spectral FFT identifies oversmoothed high-frequency roll-off typical of AI generators"
             else:
-                return 0.18, ""
+                return 0.12, ""
         except Exception:
-            return 0.20, ""
+            return 0.12, ""
 
     def _generate_specxnet_heatmap(self, pil_img: Image.Image, file_path: str) -> Tuple[str, float, str]:
         """
@@ -222,16 +220,16 @@ class ImageDetector:
             except Exception:
                 heatmap_b64 = ""
 
-            if ela_std > 68.0:
-                score = 0.81
+            if ela_std > 75.0:
+                score = 0.82
                 anom = "SpecXNet Spatial ELA reveals inconsistent JPEG compression residual variance across synthesized regions"
             else:
-                score = 0.18
+                score = 0.12
                 anom = ""
 
             return heatmap_b64, score, anom
         except Exception:
-            return "", 0.20, ""
+            return "", 0.12, ""
 
     def _analyze_spatial_noise(self, pil_img: Image.Image) -> Tuple[float, str]:
         """
@@ -241,10 +239,7 @@ class ImageDetector:
             img_np = np.array(pil_img, dtype=np.float32)
             r, g, b = img_np[:, :, 0], img_np[:, :, 1], img_np[:, :, 2]
 
-            # Laplacian kernel approximation in pure NumPy using 2D spatial shifts
             def laplacian_var(channel):
-                kernel = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]], dtype=np.float32)
-                # Compute discrete laplacian via slice differences
                 lap = (channel[2:, 1:-1] + channel[:-2, 1:-1] + channel[1:-1, 2:] + channel[1:-1, :-2] - 4 * channel[1:-1, 1:-1])
                 return float(np.var(lap))
 
@@ -253,14 +248,14 @@ class ImageDetector:
             var_b = laplacian_var(b)
             lap_mean = (var_r + var_g + var_b) / 3.0
 
-            if lap_mean < 45.0:
-                return 0.79, "SpecXNet Spatial noise profiling detects oversmoothed texture lacking natural sensor noise"
-            elif abs(var_b - var_r) < 1.0 and lap_mean > 800:
-                return 0.75, "SpecXNet Spatial noise profiling identifies synthetic RGB channel noise correlation"
+            if lap_mean < 25.0:
+                return 0.80, "SpecXNet Spatial noise profiling detects oversmoothed texture lacking natural sensor noise"
+            elif abs(var_b - var_r) < 0.5 and lap_mean > 1200:
+                return 0.76, "SpecXNet Spatial noise profiling identifies synthetic RGB channel noise correlation"
             else:
-                return 0.18, ""
+                return 0.12, ""
         except Exception:
-            return 0.20, ""
+            return 0.12, ""
 
     def _analyze_edge_gradients(self, pil_img: Image.Image) -> Tuple[float, str]:
         """SpecXNet Spatial Domain: Edge sharpness and boundary gradient variance (Pure NumPy)."""
@@ -275,9 +270,9 @@ class ImageDetector:
 
             ratio = grad_std / (grad_mean + 1e-6)
 
-            if ratio < 0.85:
-                return 0.77, "SpecXNet Edge gradient analysis reveals unnatural edge blur transition typical of generative AI"
+            if ratio < 0.35:
+                return 0.78, "SpecXNet Edge gradient analysis reveals unnatural edge blur transition typical of generative AI"
             else:
-                return 0.18, ""
+                return 0.12, ""
         except Exception:
-            return 0.20, ""
+            return 0.12, ""

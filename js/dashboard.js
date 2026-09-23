@@ -316,8 +316,17 @@ class DashboardManager {
 
         const prediction = data.prediction || "Likely Human";
         const aiScore = data.ai_risk_score !== undefined ? data.ai_risk_score : (data.ai_probability || 0.18);
-        const isAI = prediction === 'Likely AI-Generated' || aiScore >= 0.65;
-        const isUncertain = prediction.includes('Uncertain') || (aiScore > 0.35 && aiScore < 0.65) || (data.score_std && data.score_std > 0.28);
+        
+        let isAI = false;
+        let isUncertain = false;
+
+        if (mediaType === "image" || mediaType === "video") {
+            isAI = aiScore > 0.50 || prediction === "Likely AI-Generated";
+            isUncertain = false;
+        } else {
+            isAI = prediction === 'Likely AI-Generated' || aiScore >= 0.65;
+            isUncertain = prediction.includes('Uncertain') || (aiScore > 0.35 && aiScore < 0.65) || (data.score_std && data.score_std > 0.28);
+        }
 
         if (isUncertain) {
             badge.classList.add('badge-uncertain');
