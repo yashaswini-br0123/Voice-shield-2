@@ -420,18 +420,38 @@
                 <!-- Explanation & Technical Profile Grid -->
                 <div class="details-cards-grid">
                     
-                    <!-- Explanation Section -->
-                    <div class="light-panel explanation-card">
-                        <h3><i class="fa-solid fa-magnifying-glass-chart icon-blue"></i> Technical Verdict Explanation</h3>
-                        <div id="explanation-text" class="explanation-body">
-                            The ensemble system analyzed the media and computed an overall synthetic AI Risk Score.
+                    <!-- Real-Time Moving Wave Graph Oscilloscope Section -->
+                    <div class="light-panel moving-wave-card" id="moving-wave-card">
+                        <div class="wave-card-header">
+                            <div class="wave-card-title-wrap">
+                                <i class="fa-solid fa-wave-square icon-blue scared-logo-icon" id="wave-card-icon"></i>
+                                <h3>Real-Time Spectrogram Oscilloscope</h3>
+                            </div>
+                            <span class="wave-live-badge"><span class="wave-live-dot"></span> LIVE SINE WAVE</span>
                         </div>
                         
-                        <h4 class="anomaly-heading"><i class="fa-solid fa-bug icon-amber"></i> Detected Technical Anomalies:</h4>
-                        <ul id="anomaly-list" class="anomaly-list">
-                            <li>Unnaturally rigid pitch contour with near-zero micro-vibrato</li>
-                            <li>Abrupt high-frequency attenuation above 7.5 kHz</li>
-                        </ul>
+                        <div class="wave-canvas-container">
+                            <canvas id="moving-wave-canvas" height="150"></canvas>
+                        </div>
+                        
+                        <div class="wave-card-footer">
+                            <div class="w-stat-item">
+                                <span class="w-stat-label">Sampling Rate:</span>
+                                <span class="w-stat-val">16.0 kHz Mono</span>
+                            </div>
+                            <div class="w-stat-item">
+                                <span class="w-stat-label">Vocal Dynamics:</span>
+                                <span id="wave-vocal-status" class="w-stat-val val-blue">Continuous Oscillations</span>
+                            </div>
+                            <div class="w-stat-item">
+                                <span class="w-stat-label">Status:</span>
+                                <span class="w-stat-val val-green"><i class="fa-solid fa-circle-check"></i> Active</span>
+                            </div>
+                        </div>
+
+                        <!-- Hidden compatibility references for JS API updates -->
+                        <div id="explanation-text" class="hidden"></div>
+                        <ul id="anomaly-list" class="hidden"></ul>
                     </div>
 
                     <!-- Metadata Section -->

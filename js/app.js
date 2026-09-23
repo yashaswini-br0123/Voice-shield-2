@@ -581,4 +581,102 @@ document.addEventListener('DOMContentLoaded', () => {
             btnAnalyzeUrl.innerHTML = '<i class="fa-solid fa-play"></i> Analyze Link';
         }
     }
+
+    // 8. Moving Wave Canvas Oscilloscope Renderer & Scared Touch/Hover Interaction
+    initMovingWaveCanvas();
+    initScaredInteractions();
+
+    function initMovingWaveCanvas() {
+        const canvas = document.getElementById('moving-wave-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let step = 0;
+        let isHovered = false;
+        let mouseX = 0;
+
+        canvas.addEventListener('mouseenter', () => { isHovered = true; });
+        canvas.addEventListener('mouseleave', () => { isHovered = false; });
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+        });
+        canvas.addEventListener('touchstart', () => { triggerScaredEffect(canvas); });
+
+        function animateWave() {
+            if (!canvas.parentElement) return;
+            const width = canvas.width = canvas.parentElement.clientWidth || 400;
+            const height = canvas.height = canvas.parentElement.clientHeight || 140;
+
+            // Clear with dark cyber background
+            ctx.fillStyle = '#090d16';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw grid lines
+            ctx.strokeStyle = 'rgba(30, 41, 59, 0.4)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < width; x += 40) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < height; y += 30) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+
+            // Wave layers config (multi-frequency sine waves)
+            const waves = [
+                { color: '#2563eb', alpha: 0.85, amp: isHovered ? 38 : 24, freq: 0.015, speed: 0.08, lineWidth: 3 },
+                { color: '#3b82f6', alpha: 0.65, amp: isHovered ? 28 : 18, freq: 0.025, speed: -0.06, lineWidth: 2 },
+                { color: '#60a5fa', alpha: 0.45, amp: isHovered ? 22 : 12, freq: 0.035, speed: 0.04, lineWidth: 1.5 },
+                { color: '#10b981', alpha: 0.35, amp: isHovered ? 16 : 8,  freq: 0.05,  speed: -0.1,  lineWidth: 1 }
+            ];
+
+            waves.forEach(w => {
+                ctx.save();
+                ctx.beginPath();
+                ctx.strokeStyle = w.color;
+                ctx.globalAlpha = w.alpha;
+                ctx.lineWidth = w.lineWidth;
+                ctx.shadowColor = w.color;
+                ctx.shadowBlur = isHovered ? 12 : 6;
+
+                for (let x = 0; x < width; x++) {
+                    const hoverDist = Math.abs(x - mouseX);
+                    const hoverFactor = isHovered ? Math.max(1, 2 - hoverDist / 120) : 1;
+                    const y = height / 2 + Math.sin(x * w.freq + step * w.speed) * w.amp * hoverFactor + Math.cos(x * 0.008 + step * 0.02) * (w.amp * 0.4);
+                    
+                    if (x === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+                ctx.restore();
+            });
+
+            step += 1;
+            requestAnimationFrame(animateWave);
+        }
+
+        animateWave();
+    }
+
+    function initScaredInteractions() {
+        const scaredTargets = document.querySelectorAll('.sidebar-brand, .brand-icon, .brand-title, .splash-logo-wrapper, .scared-logo-icon, #moving-wave-card');
+        
+        scaredTargets.forEach(target => {
+            target.addEventListener('touchstart', () => triggerScaredEffect(target), { passive: true });
+            target.addEventListener('click', () => triggerScaredEffect(target));
+        });
+    }
+
+    function triggerScaredEffect(element) {
+        if (!element) return;
+        element.classList.remove('scared-shake');
+        void element.offsetWidth; // Force reflow
+        element.classList.add('scared-shake');
+        setTimeout(() => element.classList.remove('scared-shake'), 1200);
+    }
 });
