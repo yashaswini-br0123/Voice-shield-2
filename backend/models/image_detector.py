@@ -61,13 +61,13 @@ class ImageDetector:
         if ela_anom:
             anomalies.append(ela_anom)
 
-        # 3. SpecXNet Spatial Noise Covariance & Color Correlation
+        # 3. SpecXNet Spatial Noise Covariance & Texture Smoothness
         noise_score, noise_anom = self._analyze_spatial_noise(pil_img)
         scores.append(noise_score)
         if noise_anom:
             anomalies.append(noise_anom)
 
-        # 4. SpecXNet Edge & Boundary Gradient Consistency
+        # 4. SpecXNet Edge & Boundary Gradient Splicing Check
         edge_score, edge_anom = self._analyze_edge_gradients(pil_img)
         scores.append(edge_score)
         if edge_anom:
@@ -157,33 +157,33 @@ class ImageDetector:
 
     def _analyze_fft_spectrum(self, pil_img: Image.Image) -> Tuple[float, str]:
         """
-        SpecXNet Spectral Domain: Pure NumPy 2D FFT Frequency Analysis.
-        Measures high-frequency spectral grid artifacts and energy distribution ratio.
+        SpecXNet 2D FFT Spectral Analysis.
+        Checks for periodic high-frequency spectral grid spikes characteristic of GANs/Diffusion.
         """
         try:
-            gray_img = pil_img.convert('L').resize((512, 512))
+            gray_img = pil_img.convert('L').resize((256, 256))
             img_np = np.array(gray_img, dtype=np.float32)
 
             fft = np.fft.fft2(img_np)
             fft_shift = np.fft.fftshift(fft)
-            magnitude_spectrum = 20 * np.log(np.abs(fft_shift) + 1e-6)
+            magnitude = 20 * np.log(np.abs(fft_shift) + 1e-6)
 
-            h, w = magnitude_spectrum.shape
+            h, w = magnitude.shape
             cy, cx = h // 2, w // 2
-            radius = 120
 
+            radius = 35
             y, x = np.ogrid[:h, :w]
-            mask = (x - cx)**2 + (y - cy)**2 <= radius**2
+            center_mask = (x - cx)**2 + (y - cy)**2 <= radius**2
 
-            center_energy = np.mean(magnitude_spectrum[mask])
-            outer_energy = np.mean(magnitude_spectrum[~mask])
+            outer_mag = magnitude[~center_mask]
+            max_outer = float(np.max(outer_mag))
+            mean_outer = float(np.mean(outer_mag))
+            std_outer = float(np.std(outer_mag))
 
-            ratio = float(outer_energy / (center_energy + 1e-6))
+            spike_ratio = (max_outer - mean_outer) / (std_outer + 1e-6)
 
-            if ratio > 0.88:
-                return 0.84, "SpecXNet 2D Spectral FFT detects artificial high-frequency grid artifacts (Diffusion/GAN signature)"
-            elif ratio < 0.10:
-                return 0.78, "SpecXNet 2D Spectral FFT identifies oversmoothed high-frequency roll-off typical of AI generators"
+            if spike_ratio > 4.8:
+                return 0.84, "SpecXNet 2D Spectral FFT detects artificial high-frequency grid spikes (Diffusion/GAN signature)"
             else:
                 return 0.12, ""
         except Exception:
@@ -243,45 +243,34 @@ class ImageDetector:
 
     def _analyze_spatial_noise(self, pil_img: Image.Image) -> Tuple[float, str]:
         """
-        SpecXNet Spatial Domain: Color channel noise covariance and pixel variance (Pure NumPy).
+        SpecXNet Spatial Noise & Texture Oversmoothing Check.
         """
         try:
-            img_np = np.array(pil_img, dtype=np.float32)
-            r, g, b = img_np[:, :, 0], img_np[:, :, 1], img_np[:, :, 2]
+            gray = np.array(pil_img.convert('L'), dtype=np.float32)
+            lap = (gray[2:, 1:-1] + gray[:-2, 1:-1] + gray[1:-1, 2:] + gray[1:-1, :-2] - 4 * gray[1:-1, 1:-1])
+            lap_var = float(np.var(lap))
 
-            def laplacian_var(channel):
-                lap = (channel[2:, 1:-1] + channel[:-2, 1:-1] + channel[1:-1, 2:] + channel[1:-1, :-2] - 4 * channel[1:-1, 1:-1])
-                return float(np.var(lap))
-
-            var_r = laplacian_var(r)
-            var_g = laplacian_var(g)
-            var_b = laplacian_var(b)
-            lap_mean = (var_r + var_g + var_b) / 3.0
-
-            if lap_mean < 25.0:
-                return 0.80, "SpecXNet Spatial noise profiling detects oversmoothed texture lacking natural sensor noise"
-            elif abs(var_b - var_r) < 0.5 and lap_mean > 1200:
-                return 0.76, "SpecXNet Spatial noise profiling identifies synthetic RGB channel noise correlation"
+            if lap_var < 10.0:
+                return 0.82, "SpecXNet Spatial noise profiling detects oversmoothed plastic texture lacking camera sensor noise"
             else:
                 return 0.12, ""
         except Exception:
             return 0.12, ""
 
     def _analyze_edge_gradients(self, pil_img: Image.Image) -> Tuple[float, str]:
-        """SpecXNet Spatial Domain: Edge sharpness and boundary gradient variance (Pure NumPy)."""
+        """
+        SpecXNet Edge & Boundary Mismatch Check.
+        """
         try:
             gray = np.array(pil_img.convert('L'), dtype=np.float32)
-            grad_x = np.diff(gray, axis=1)
-            grad_y = np.diff(gray, axis=0)
+            grad_x = np.abs(np.diff(gray, axis=1))
+            grad_y = np.abs(np.diff(gray, axis=0))
 
-            grad_mag = np.sqrt(grad_x[:-1, :]**2 + grad_y[:, :-1]**2)
-            grad_std = float(np.std(grad_mag))
-            grad_mean = float(np.mean(grad_mag))
+            max_grad = max(float(np.max(grad_x)), float(np.max(grad_y)))
+            mean_grad = (float(np.mean(grad_x)) + float(np.mean(grad_y))) / 2.0
 
-            ratio = grad_std / (grad_mean + 1e-6)
-
-            if ratio < 0.35:
-                return 0.78, "SpecXNet Edge gradient analysis reveals unnatural edge blur transition typical of generative AI"
+            if max_grad > 135.0 and mean_grad < 5.0:
+                return 0.80, "SpecXNet Edge gradient analysis detects synthetic boundary splicing artifact"
             else:
                 return 0.12, ""
         except Exception:
