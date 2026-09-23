@@ -26,7 +26,7 @@ class Settings:
     VERSION: str = "2.0.0"
     
     # Operation Mode
-    DEMO_MODE: bool = (os.getenv("DEMO_MODE") or "true").lower() == "true"
+    DEMO_MODE: bool = (os.getenv("DEMO_MODE") or "false").lower() == "true"
     
     # Server Settings
     HOST: str = os.getenv("HOST") or "0.0.0.0"

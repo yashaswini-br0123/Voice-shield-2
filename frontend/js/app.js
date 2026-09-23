@@ -156,26 +156,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createSyntheticImageFile(filename, isAI = false) {
         const canvas = document.createElement('canvas');
-        canvas.width = 400;
-        canvas.height = 400;
+        canvas.width = 512;
+        canvas.height = 512;
         const ctx = canvas.getContext('2d');
+        const imgData = ctx.createImageData(512, 512);
+        const data = imgData.data;
 
-        const grad = ctx.createLinearGradient(0, 0, 400, 400);
-        grad.addColorStop(0, '#3b82f6');
-        grad.addColorStop(1, '#8b5cf6');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, 400, 400);
-
-        if (isAI) {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-            for (let i = 0; i < 400; i += 8) {
-                for (let j = 0; j < 400; j += 8) {
-                    if ((i + j) % 16 === 0) {
-                        ctx.fillRect(i, j, 4, 4);
-                    }
+        for (let y = 0; y < 512; y++) {
+            for (let x = 0; x < 512; x++) {
+                const idx = (y * 512 + x) * 4;
+                if (!isAI) {
+                    const r = Math.sin(x * 0.01) * 70 + 120 + (Math.random() - 0.5) * 20;
+                    const g = Math.cos(y * 0.01) * 70 + 120 + (Math.random() - 0.5) * 20;
+                    const b = Math.sin((x + y) * 0.008) * 70 + 140 + (Math.random() - 0.5) * 20;
+                    data[idx] = Math.max(0, Math.min(255, r));
+                    data[idx + 1] = Math.max(0, Math.min(255, g));
+                    data[idx + 2] = Math.max(0, Math.min(255, b));
+                    data[idx + 3] = 255;
+                } else {
+                    const gridPattern = (Math.floor(x / 4) + Math.floor(y / 4)) % 2 === 0 ? 55 : -55;
+                    const baseR = 100 + Math.sin(x * 0.05) * 50;
+                    const baseG = 120 + Math.cos(y * 0.05) * 50;
+                    const baseB = 200 + Math.sin((x - y) * 0.05) * 50;
+                    data[idx] = Math.max(0, Math.min(255, baseR + gridPattern));
+                    data[idx + 1] = Math.max(0, Math.min(255, baseG + gridPattern));
+                    data[idx + 2] = Math.max(0, Math.min(255, baseB + gridPattern));
+                    data[idx + 3] = 255;
                 }
             }
         }
+        ctx.putImageData(imgData, 0, 0);
 
         canvas.toBlob((blob) => {
             const testImgFile = new File([blob], filename, { type: 'image/jpeg' });
@@ -207,17 +217,29 @@ document.addEventListener('DOMContentLoaded', () => {
         let frameCount = 0;
         const interval = setInterval(() => {
             frameCount++;
-            ctx.fillStyle = isAI ? '#1e1b4b' : '#0f172a';
-            ctx.fillRect(0, 0, 320, 240);
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '14px sans-serif';
-            ctx.fillText(isAI ? 'SYNTHETIC AI VIDEO SAMPLE' : 'AUTHENTIC REAL VIDEO SAMPLE', 20, 120);
-            
-            if (isAI) {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                for (let i = 0; i < 320; i += 20) {
-                    ctx.fillRect(i, (frameCount * 4) % 240, 10, 2);
+            if (!isAI) {
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(0, 0, 320, 240);
+                const r = 100 + Math.sin(frameCount * 0.1) * 40;
+                ctx.fillStyle = `rgb(${r}, 150, 200)`;
+                ctx.beginPath();
+                ctx.arc(160, 120, 40, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '14px sans-serif';
+                ctx.fillText('AUTHENTIC REAL VIDEO SAMPLE', 30, 40);
+            } else {
+                ctx.fillStyle = '#1e1b4b';
+                ctx.fillRect(0, 0, 320, 240);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                for (let i = 0; i < 320; i += 8) {
+                    for (let j = 0; j < 240; j += 8) {
+                        if ((i + j) % 16 === 0) ctx.fillRect(i, j, 4, 4);
+                    }
                 }
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '14px sans-serif';
+                ctx.fillText('SYNTHETIC AI VIDEO SAMPLE', 30, 40);
             }
         }, 33);
 
@@ -243,21 +265,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createSyntheticSampleWav(f0_base, filename, isAI = false) {
         const sr = 16000;
-        const numSamples = sr * 3;
+        const duration = 3.0;
+        const numSamples = sr * duration;
         const samples = new Int16Array(numSamples);
 
         for (let i = 0; i < numSamples; i++) {
             const t = i / sr;
-            let f0 = f0_base;
+            let sampleVal = 0;
+
             if (!isAI) {
-                f0 += 10.0 * Math.sin(2 * Math.PI * 5.0 * t);
+                // REAL HUMAN VOICE SPEECH SIMULATION:
+                // 1. Natural Fundamental Frequency (F0) with pitch vibrato (~5.5 Hz modulation, 6 Hz vibrato depth)
+                const f0 = f0_base + 6.0 * Math.sin(2 * Math.PI * 5.5 * t) + 2.0 * Math.sin(2 * Math.PI * 1.8 * t);
+                
+                // 2. Vocal Tract Formant Resonances (F1 ~ 500 Hz, F2 ~ 1500 Hz, F3 ~ 2500 Hz)
+                const phase0 = 2 * Math.PI * f0 * t;
+                const phase1 = 2 * Math.PI * 500 * t;
+                const phase2 = 2 * Math.PI * 1500 * t;
+                const phase3 = 2 * Math.PI * 2500 * t;
+                
+                // Harmonic glottal pulse decay (1/n) + formant shaping
+                const glottal = Math.sin(phase0) + 0.5 * Math.sin(2 * phase0) + 0.25 * Math.sin(3 * phase0);
+                const formants = 0.4 * Math.sin(phase1) + 0.25 * Math.sin(phase2) + 0.15 * Math.sin(phase3);
+                
+                // 3. Speaking cadence envelope (syllables ~3.5 Hz)
+                const envelope = 0.5 + 0.5 * Math.sin(2 * Math.PI * 3.5 * t);
+                
+                // 4. Natural micro-jitter and room acoustic noise floor
+                const jitterNoise = (Math.random() - 0.5) * 0.08;
+                
+                sampleVal = (glottal * 0.4 + formants * 0.5) * envelope + jitterNoise;
+            } else {
+                // SYNTHETIC AI VOICE SIMULATION:
+                // 1. Rigid, static fundamental frequency (zero pitch vibrato, jitter < 0.0001)
+                const f0 = f0_base;
+                const phase = 2 * Math.PI * f0 * t;
+                
+                // 2. Pure un-filtered tone without vocal tract formants
+                const tone = Math.sin(phase) + 0.3 * Math.sin(2 * phase);
+                
+                // 3. Constant robotic amplitude without speech cadence envelope
+                sampleVal = tone * 0.7;
             }
-            const phase = 2 * Math.PI * f0 * t;
-            let sampleVal = Math.sin(phase) + 0.5 * Math.sin(2 * phase);
-            if (!isAI) {
-                sampleVal += (Math.random() - 0.5) * 0.05;
-            }
-            samples[i] = Math.max(-32768, Math.min(32767, sampleVal * 16384));
+
+            samples[i] = Math.max(-32768, Math.min(32767, sampleVal * 14000));
         }
 
         const buffer = new ArrayBuffer(44 + numSamples * 2);
