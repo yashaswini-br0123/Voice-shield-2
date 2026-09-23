@@ -269,6 +269,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const numSamples = sr * duration;
         const samples = new Int16Array(numSamples);
 
+        let phase0 = 0.0, phase1 = 0.0, phase2 = 0.0, phase3 = 0.0;
+
         for (let i = 0; i < numSamples; i++) {
             const t = i / sr;
             let sampleVal = 0;
@@ -279,10 +281,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const f0 = f0_base + 6.0 * Math.sin(2 * Math.PI * 5.5 * t) + 2.0 * Math.sin(2 * Math.PI * 1.8 * t);
                 
                 // 2. Vocal Tract Formant Resonances (F1 ~ 500 Hz, F2 ~ 1500 Hz, F3 ~ 2500 Hz)
-                const phase0 = 2 * Math.PI * f0 * t;
-                const phase1 = 2 * Math.PI * 500 * t;
-                const phase2 = 2 * Math.PI * 1500 * t;
-                const phase3 = 2 * Math.PI * 2500 * t;
+                phase0 += 2 * Math.PI * f0 / sr;
+                phase1 += 2 * Math.PI * 500 / sr;
+                phase2 += 2 * Math.PI * 1500 / sr;
+                phase3 += 2 * Math.PI * 2500 / sr;
                 
                 // Harmonic glottal pulse decay (1/n) + formant shaping
                 const glottal = Math.sin(phase0) + 0.5 * Math.sin(2 * phase0) + 0.25 * Math.sin(3 * phase0);
@@ -299,10 +301,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 // SYNTHETIC AI VOICE SIMULATION:
                 // 1. Rigid, static fundamental frequency (zero pitch vibrato, jitter < 0.0001)
                 const f0 = f0_base;
-                const phase = 2 * Math.PI * f0 * t;
+                phase0 += 2 * Math.PI * f0 / sr;
                 
                 // 2. Pure un-filtered tone without vocal tract formants
-                const tone = Math.sin(phase) + 0.3 * Math.sin(2 * phase);
+                const tone = Math.sin(phase0) + 0.3 * Math.sin(2 * phase0);
                 
                 // 3. Constant robotic amplitude without speech cadence envelope
                 sampleVal = tone * 0.7;

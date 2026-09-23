@@ -116,8 +116,8 @@ def extract_acoustic_features(audio: np.ndarray, sr: int = 16000) -> Dict[str, A
                     continue
                 corr = np.correlate(frame, frame, mode='full')
                 corr = corr[len(frame)-1:]
-                min_lag = max(1, int(sr / 500))
-                max_lag = min(len(corr) - 1, int(sr / 60))
+                min_lag = max(1, int(sr / 300))
+                max_lag = min(len(corr) - 1, int(sr / 70))
                 if max_lag > min_lag:
                     peak_lag = min_lag + np.argmax(corr[min_lag:max_lag])
                     if corr[peak_lag] > 0.2 * corr[0]:
@@ -149,7 +149,9 @@ def extract_acoustic_features(audio: np.ndarray, sr: int = 16000) -> Dict[str, A
             freqs = np.fft.rfftfreq(n_fft, 1.0/sr)
             high_mask = freqs > (sr * 0.45)
             high_freq_energy_ratio = float(np.sum(spec[:, high_mask]**2) / (np.sum(spec**2) + 1e-8))
-            spectral_flatness_mean = float(np.mean(np.exp(np.mean(np.log(spec + 1e-8), axis=1)) / (np.mean(spec, axis=1) + 1e-8)))
+            g_mean = np.exp(np.mean(np.log(spec + 1e-6), axis=1))
+            a_mean = np.mean(spec, axis=1) + 1e-6
+            spectral_flatness_mean = float(np.mean(g_mean / a_mean))
         else:
             mel_mean, mel_std, high_freq_energy_ratio, spectral_flatness_mean = 0.0, 0.0, 0.0, 0.0
 

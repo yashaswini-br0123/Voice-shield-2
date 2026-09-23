@@ -35,9 +35,9 @@ class AcousticDetector:
         voiced_ratio = features.get("voiced_ratio", 0.0)
         
         if voiced_ratio > 0.15 or (pitch_std < 1.5 and features.get("rms_mean", 0.0) > 0.005):
-            if f0_jitter < 0.002 and pitch_std < 2.0:
+            if f0_jitter < 0.005 and pitch_std < 2.0:
                 scores.append(0.88)
-                anomaly_reasons.append("Unnaturally rigid pitch contour with near-zero micro-vibrato (jitter < 0.2%)")
+                anomaly_reasons.append("Unnaturally rigid pitch contour with near-zero micro-vibrato (jitter < 0.5%)")
             elif f0_jitter > 0.15:
                 scores.append(0.78)
                 anomaly_reasons.append("Unstable glottal pitch transitions typical of voice conversion artifacts")
@@ -67,7 +67,7 @@ class AcousticDetector:
 
         # 4. Spectral Flatness
         spectral_flatness = features.get("spectral_flatness", 0.0)
-        if spectral_flatness > 0.08:
+        if spectral_flatness > 0.40:
             scores.append(0.72)
             anomaly_reasons.append("Acoustically unnatural noise distribution in spectral envelope")
         else:
