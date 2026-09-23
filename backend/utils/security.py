@@ -60,10 +60,12 @@ def save_temp_file(contents: bytes, filename: str) -> Generator[str, None, None]
     automatic cleanup upon completion or failure.
     """
     sanitized = sanitize_filename(filename)
-    ext = os.path.splitext(sanitized)[1] or ".bin"
+    base_name, ext = os.path.splitext(sanitized)
+    ext = ext or ".bin"
+    prefix = f"vs_{base_name}_"
     
     temp_dir = tempfile.gettempdir()
-    fd, temp_path = tempfile.mkstemp(suffix=ext, prefix="voiceshield_", dir=temp_dir)
+    fd, temp_path = tempfile.mkstemp(suffix=ext, prefix=prefix, dir=temp_dir)
     
     try:
         with os.fdopen(fd, 'wb') as f:

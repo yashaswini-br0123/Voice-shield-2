@@ -134,7 +134,7 @@ async def analyze_media(
         
         if media_type == "image":
             # Image Deepfake Analysis
-            score, img_details = get_image_model().analyze(temp_path)
+            score, img_details = get_image_model().analyze(temp_path, original_filename=file.filename or "")
             proc_time = round(time.time() - start_time, 3)
 
             # Binary outcome: > 0.50 AI-Generated, <= 0.50 Human / Authentic Real
@@ -171,7 +171,7 @@ async def analyze_media(
 
         elif media_type == "video":
             # Video Deepfake Multimodal Analysis
-            score, vid_details = get_video_model().analyze(temp_path)
+            score, vid_details = get_video_model().analyze(temp_path, original_filename=file.filename or "")
             proc_time = round(time.time() - start_time, 3)
 
             # Binary outcome: > 0.50 AI Deepfake Video, <= 0.50 Authentic Real Video
