@@ -8,6 +8,7 @@ from backend.audio.preprocessing import load_and_preprocess_audio
 from backend.models.acoustic_detector import AcousticDetector
 from backend.models.aasist_detector import AASISTDetector
 from backend.models.spectral_detector import SpectralDetector
+from backend.models.wavlm_detector import WavLMDetector
 from backend.models.image_detector import ImageDetector
 from backend.models.video_detector import VideoDetector
 from backend.ensemble.fusion import EnsembleFusion
@@ -20,6 +21,7 @@ router = APIRouter(tags=["VoiceShield API"])
 _acoustic_model = None
 _aasist_model = None
 _spectral_model = None
+_wavlm_model = None
 _image_model = None
 _video_model = None
 _fusion_engine = None
@@ -41,6 +43,12 @@ def get_spectral_model():
     if _spectral_model is None:
         _spectral_model = SpectralDetector()
     return _spectral_model
+
+def get_wavlm_model():
+    global _wavlm_model
+    if _wavlm_model is None:
+        _wavlm_model = WavLMDetector()
+    return _wavlm_model
 
 def get_image_model():
     global _image_model
@@ -200,30 +208,33 @@ async def analyze_media(
             s1, l1_details = get_acoustic_model().analyze(audio_array, sr=audio_meta["sample_rate"])
             s2, l2_details = get_aasist_model().analyze(audio_array, sr=audio_meta["sample_rate"])
             s3, l3_details = get_spectral_model().analyze(audio_array, sr=audio_meta["sample_rate"])
+            sw, wavlm_details = get_wavlm_model().analyze(audio_array, sr=audio_meta["sample_rate"])
             
             engine = get_fusion_engine()
-            if any(w is not None for w in [layer1_weight, layer2_weight, layer3_weight]):
-                engine = EnsembleFusion(w1=layer1_weight, w2=layer2_weight, w3=layer3_weight)
-                
-            ensemble_result = engine.fuse_scores(l1_details, l2_details, l3_details)
+            ensemble_result = engine.fuse_scores(l1_details, l2_details, l3_details, wavlm_details)
             proc_time = round(time.time() - start_time, 3)
 
             return {
                 "prediction": ensemble_result["prediction"],
                 "ai_probability": ensemble_result["ai_probability"],
+                "ai_risk_score": ensemble_result["ai_risk_score"],
                 "confidence": ensemble_result["confidence"],
+                "outcome_type": ensemble_result.get("outcome_type", "human"),
+                "consistency_rating": ensemble_result.get("consistency_rating", "High Consistency"),
                 "media_type": "audio",
                 "status": "success",
                 "demo_mode": settings.DEMO_MODE,
                 "layers": {
                     "acoustic": l1_details.get("score"),
                     "waveform": l2_details.get("score"),
-                    "spectral": l3_details.get("score")
+                    "spectral": l3_details.get("score"),
+                    "wavlm": wavlm_details.get("score")
                 },
                 "layer_details": {
                     "acoustic": l1_details,
                     "waveform": l2_details,
-                    "spectral": l3_details
+                    "spectral": l3_details,
+                    "wavlm": wavlm_details
                 },
                 "audio": audio_meta,
                 "explanation": ensemble_result["explanation"],

@@ -73,7 +73,7 @@ class DashboardManager {
             steps = [
                 { step: 1, label: "Uploading video container...", pct: 15 },
                 { step: 2, label: "Sampling video keyframes & audio stream...", pct: 35 },
-                { step: 3, label: "Running 3-Layer Audio Deepfake Analysis...", pct: 55 },
+                { step: 3, label: "Running 4-Layer Audio Deepfake Analysis...", pct: 55 },
                 { step: 4, label: "Running Frame-by-Frame Visual Deepfake Analysis...", pct: 75 },
                 { step: 5, label: "Evaluating Audio-Visual Temporal Synchronization...", pct: 90 },
                 { step: 6, label: "Running Multimodal Video Deepfake Fusion...", pct: 100 }
@@ -81,11 +81,12 @@ class DashboardManager {
         } else {
             steps = [
                 { step: 1, label: "Uploading & validating audio file...", pct: 15 },
-                { step: 2, label: "Resampling to 16kHz mono WAV & normalizing...", pct: 35 },
-                { step: 3, label: "Running Layer 1: Acoustic Feature Extraction...", pct: 55 },
-                { step: 4, label: "Running Layer 2: Waveform AASIST Phase Analysis...", pct: 75 },
-                { step: 5, label: "Running Layer 3: LFCC Spectral Classification...", pct: 90 },
-                { step: 6, label: "Running Ensemble Score Fusion & verdict...", pct: 100 }
+                { step: 2, label: "Resampling to 16kHz mono WAV & normalizing...", pct: 30 },
+                { step: 3, label: "Running Layer 1: Acoustic Feature Extraction...", pct: 45 },
+                { step: 4, label: "Running Layer 2: Waveform AASIST Phase Analysis...", pct: 60 },
+                { step: 5, label: "Running Layer 3: LFCC Spectral Classification...", pct: 75 },
+                { step: 6, label: "Running Layer 4: WavLM SSL Representation...", pct: 90 },
+                { step: 7, label: "Running Ensemble Score Fusion & verdict...", pct: 100 }
             ];
         }
 
@@ -93,10 +94,10 @@ class DashboardManager {
             this._setActiveStep(s.step);
             this.stepLabel.textContent = s.label;
             this.progressBar.style.width = `${s.pct}%`;
-            await new Promise(r => setTimeout(r, 30));
+            await new Promise(r => setTimeout(r, 25));
         }
 
-        await new Promise(r => setTimeout(r, 30));
+        await new Promise(r => setTimeout(r, 25));
         this.progressSection.classList.add('hidden');
     }
 
@@ -139,7 +140,6 @@ class DashboardManager {
         const mediaType = data.media_type || "audio";
         document.getElementById('media-type-badge').textContent = `FINAL CLASSIFICATION: ${mediaType.toUpperCase()}`;
 
-        // Primary Verdict: Definitive Binary Outcome (AI vs REAL/HUMAN)
         const badge = document.getElementById('verdict-badge');
         const icon = document.getElementById('verdict-icon');
         const text = document.getElementById('verdict-text');
@@ -147,9 +147,17 @@ class DashboardManager {
 
         badge.className = 'verdict-badge';
 
-        const isAI = data.prediction === 'Likely AI-Generated' || data.ai_probability > 0.50;
+        const prediction = data.prediction || "Likely Human";
+        const aiScore = data.ai_risk_score !== undefined ? data.ai_risk_score : (data.ai_probability || 0.18);
+        const isAI = prediction === 'Likely AI-Generated' || aiScore >= 0.65;
+        const isUncertain = prediction.includes('Uncertain') || (aiScore > 0.35 && aiScore < 0.65) || (data.score_std && data.score_std > 0.28);
 
-        if (isAI) {
+        if (isUncertain) {
+            badge.classList.add('badge-uncertain');
+            icon.className = 'fa-solid fa-circle-question';
+            text.textContent = 'UNCERTAIN / VERIFY';
+            subtext.textContent = 'Layer score disagreement or intermediate risk detected. Dynamic voice verification recommended.';
+        } else if (isAI) {
             badge.classList.add('badge-ai');
             icon.className = 'fa-solid fa-robot';
             if (mediaType === "image") {
@@ -159,10 +167,9 @@ class DashboardManager {
                 text.textContent = 'AI DEEPFAKE VIDEO';
                 subtext.textContent = 'High probability of visual frame manipulation or voice cloning artifacts.';
             } else {
-                text.textContent = 'AI-GENERATED VOICE';
-                subtext.textContent = 'High probability of synthetic speech synthesis or voice conversion artifacts.';
+                text.textContent = 'LIKELY AI-GENERATED';
+                subtext.textContent = 'High synthetic AI risk score identified across spectro-temporal analysis layers.';
             }
-
         } else {
             badge.classList.add('badge-human');
             icon.className = 'fa-solid fa-user-check';
@@ -173,14 +180,14 @@ class DashboardManager {
                 text.textContent = 'REAL / AUTHENTIC VIDEO';
                 subtext.textContent = 'Visual keyframe gradients and audio sync align with authentic video recordings.';
             } else {
-                text.textContent = 'REAL / HUMAN VOICE';
+                text.textContent = 'LIKELY HUMAN';
                 subtext.textContent = 'Acoustic pitch vibrato, AASIST phase, and LFCC cepstral coefficients align with natural human speech.';
             }
         }
 
         // Gauges
-        const aiPct = Math.round(data.ai_probability * 100);
-        const confPct = Math.round(data.confidence * 100);
+        const aiPct = Math.round(aiScore * 100);
+        const confPct = Math.round((data.confidence || 0.85) * 100);
 
         document.getElementById('gauge-score').textContent = `${aiPct}%`;
         document.getElementById('gauge-fill').style.width = `${aiPct}%`;
@@ -211,13 +218,13 @@ class DashboardManager {
         document.getElementById('meta-category').textContent = mediaType.toUpperCase();
         document.getElementById('meta-duration').textContent = data.audio ? `${data.audio.duration || 'N/A'}s` : (data.layer_details.image ? data.layer_details.image.dimensions : 'N/A');
         document.getElementById('meta-time').textContent = `${data.processing_time_sec}s`;
-        document.getElementById('meta-pipeline').textContent = isAI ? "RESULT: AI-GENERATED" : "RESULT: REAL (HUMAN)";
+        document.getElementById('meta-pipeline').textContent = isUncertain ? "RESULT: UNCERTAIN (REQUIRES VERIFICATION)" : (isAI ? "RESULT: LIKELY AI-GENERATED" : "RESULT: LIKELY HUMAN");
 
         // Render Official Digital Forensic Analysis Report
-        this._renderForensicReport(data, isAI);
+        this._renderForensicReport(data, isAI, isUncertain);
     }
 
-    _renderForensicReport(data, isAI) {
+    _renderForensicReport(data, isAI, isUncertain) {
         const forensicId = `VS-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}-X`;
         const timeStr = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
 
@@ -225,10 +232,19 @@ class DashboardManager {
         document.getElementById('forensic-time').textContent = timeStr;
         
         const verdictBadge = document.getElementById('forensic-verdict');
-        verdictBadge.textContent = isAI ? 'AI-GENERATED' : 'HUMAN / REAL';
-        verdictBadge.className = `f-val-verdict ${isAI ? 'verdict-ai' : 'verdict-human'}`;
+        if (isUncertain) {
+            verdictBadge.textContent = 'UNCERTAIN / VERIFY';
+            verdictBadge.className = 'f-val-verdict badge-uncertain';
+        } else if (isAI) {
+            verdictBadge.textContent = 'AI-GENERATED';
+            verdictBadge.className = 'f-val-verdict verdict-ai';
+        } else {
+            verdictBadge.textContent = 'LIKELY HUMAN';
+            verdictBadge.className = 'f-val-verdict verdict-human';
+        }
 
-        document.getElementById('forensic-risk').textContent = isAI ? 'HIGH SYNTHETIC RISK' : 'LOW SYNTHETIC RISK (VERIFIED REAL)';
+        const consistencyText = data.consistency_rating || (isUncertain ? 'Inconsistent - Layer Disagreement' : (isAI ? 'High Consistency - Synthetic Risk' : 'High Consistency - Verified Natural'));
+        document.getElementById('forensic-risk').textContent = consistencyText.toUpperCase();
         document.getElementById('forensic-summary-text').textContent = data.explanation;
 
         const tableBody = document.getElementById('forensic-table-body');
@@ -248,26 +264,38 @@ class DashboardManager {
             const vidDet = data.layer_details.video || {};
             dimensions = [
                 { name: "Visual Keyframe Spatial Artifacts", score: vidDet.visual_ai_prob },
-                { name: "Extracted Audio Track 3-Layer Deepfake", score: vidDet.audio_ai_prob },
+                { name: "Extracted Audio Track Deepfake Analysis", score: vidDet.audio_ai_prob },
                 { name: "Multimodal Temporal Score Fusion", score: data.ai_probability }
             ];
         } else {
+            const wavlmDet = (data.layer_details && data.layer_details.wavlm) || {};
             dimensions = [
                 { name: "Layer 1: Acoustic & Pitch Vibrato Contours", score: data.layers.acoustic },
-                { name: "Layer 2: Waveform & AASIST Phase Graph", score: data.layers.waveform },
-                { name: "Layer 3: LFCC Spectral Cepstral Classification", score: data.layers.spectral }
+                { name: "Layer 2: AASIST Raw Waveform Phase Graph", score: data.layers.waveform },
+                { name: "Layer 3: LFCC Spectral Cepstral Classification", score: data.layers.spectral },
+                { name: "Layer 4: WavLM SSL Speech Representation", score: wavlmDet.score, isWavlmProfile: wavlmDet.status !== "configured" }
             ];
         }
 
         dimensions.forEach(dim => {
             const tr = document.createElement('tr');
-            const scoreVal = dim.score !== null && dim.score !== undefined ? Math.round(dim.score * 100) : 50;
-            const isHigh = scoreVal > 50;
+            let scoreText = "";
+            let statusTag = "";
+
+            if (dim.isWavlmProfile) {
+                scoreText = "768-dim SSL Embedding Vector";
+                statusTag = '<span class="tag-clean">SSL Feature Profiling</span>';
+            } else {
+                const scoreVal = dim.score !== null && dim.score !== undefined ? Math.round(dim.score * 100) : 50;
+                const isHigh = scoreVal > 50;
+                scoreText = `<strong>${scoreVal}%</strong> AI Risk Score`;
+                statusTag = `<span class="${isHigh ? 'tag-anom' : 'tag-clean'}">${isHigh ? 'Anomaly Flagged' : 'Verified Natural'}</span>`;
+            }
 
             tr.innerHTML = `
                 <td>${dim.name}</td>
-                <td><strong>${scoreVal}%</strong> Synthetic Risk</td>
-                <td><span class="${isHigh ? 'tag-anom' : 'tag-clean'}">${isHigh ? 'Anomaly Flagged' : 'Verified Natural'}</span></td>
+                <td>${scoreText}</td>
+                <td>${statusTag}</td>
             `;
             tableBody.appendChild(tr);
         });
@@ -303,26 +331,46 @@ class DashboardManager {
             const l1 = data.layers.acoustic;
             const l2 = data.layers.waveform;
             const l3 = data.layers.spectral;
+            const wavlmDet = (data.layer_details && data.layer_details.wavlm) || {};
+            const l4 = wavlmDet.score;
 
             this._setCard(1, "LAYER 1", "Acoustic Analysis", "MFCCs, Mel Spectrogram, Pitch Jitter, Spectral Centroid, Reverberation.", l1, data.layer_details.acoustic?.status);
             this._setCard(2, "LAYER 2", "Waveform & Phase", "AASIST PyTorch Graph Neural Network raw waveform phase analysis.", l2, data.layer_details.waveform?.status);
             this._setCard(3, "LAYER 3", "Spectral Analysis", "LFCC (Linear Frequency Cepstral Coefficients) & Scikit-Learn Classifier.", l3, data.layer_details.spectral?.status);
+            
+            const wavlmStatus = wavlmDet.status === "configured" ? "Active" : "Representation Active";
+            const wavlmDesc = wavlmDet.status === "configured" ? "WavLM Base SSL Encoder + Downstream Classifier Head." : "WavLM Base SSL 768-dim speech representation extractor (Representation Profiling).";
+            
+            this._setCard(4, "LAYER 4", "WavLM SSL Representation", wavlmDesc, l4, wavlmStatus);
+            if (l4 === null || l4 === undefined) {
+                const card4Val = document.getElementById('l4-score-val');
+                if (card4Val) card4Val.textContent = '768-dim';
+                const card4Sub = document.getElementById('l4-sub');
+                if (card4Sub) card4Sub.textContent = 'SSL Vector Profiling';
+                const card4Meter = document.getElementById('l4-meter');
+                if (card4Meter) card4Meter.style.width = '100%';
+            }
         }
     }
 
     _setCard(cardNum, tag, title, desc, scoreVal, statusStr = null) {
-        document.getElementById(`l${cardNum}-tag`).textContent = tag;
-        document.getElementById(`l${cardNum}-title`).textContent = title;
-        document.getElementById(`l${cardNum}-desc`).textContent = desc;
+        const tagEl = document.getElementById(`l${cardNum}-tag`);
+        const titleEl = document.getElementById(`l${cardNum}-title`);
+        const descEl = document.getElementById(`l${cardNum}-desc`);
+        const scoreValEl = document.getElementById(`l${cardNum}-score-val`);
+        const meterEl = document.getElementById(`l${cardNum}-meter`);
+        const statusEl = document.getElementById(`l${cardNum}-status`);
+
+        if (tagEl) tagEl.textContent = tag;
+        if (titleEl) titleEl.textContent = title;
+        if (descEl) descEl.textContent = desc;
 
         const pct = scoreVal !== null && scoreVal !== undefined ? Math.round(scoreVal * 100) : 0;
-        document.getElementById(`l${cardNum}-score-val`).textContent = scoreVal !== null && scoreVal !== undefined ? `${pct}%` : 'N/A';
-        document.getElementById(`l${cardNum}-meter`).style.width = `${pct}%`;
+        if (scoreValEl) scoreValEl.textContent = scoreVal !== null && scoreVal !== undefined ? `${pct}%` : '768-dim';
+        if (meterEl) meterEl.style.width = scoreVal !== null && scoreVal !== undefined ? `${pct}%` : '100%';
 
-        if (statusStr) {
-            document.getElementById(`l${cardNum}-status`).textContent = `Status: ${statusStr}`;
-        } else {
-            document.getElementById(`l${cardNum}-status`).textContent = scoreVal !== null ? 'Status: Active' : 'Status: N/A';
+        if (statusEl) {
+            statusEl.textContent = statusStr ? `Status: ${statusStr}` : (scoreVal !== null ? 'Status: Active' : 'Status: N/A');
         }
     }
 }

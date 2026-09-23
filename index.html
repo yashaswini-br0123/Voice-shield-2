@@ -153,7 +153,7 @@
             <header class="top-hero">
                 <div class="hero-left">
                     <h2>AI Deepfake Detection Platform</h2>
-                    <p>Multi-layer spectro-temporal voice analysis & visual anomaly detection.</p>
+                    <p>Multi-layer spectro-temporal voice analysis, WavLM SSL representations & visual anomaly detection.</p>
                 </div>
                 <div class="hero-right-actions">
                     <button id="theme-toggle" class="theme-toggle-btn" title="Toggle Dark/Light Mode">
@@ -178,8 +178,8 @@
                     <div class="light-panel welcome-card">
                         <div class="w-card-icon icon-blue"><i class="fa-solid fa-waveform-lines"></i></div>
                         <h4>Voice & Audio Detection</h4>
-                        <p>Evaluates MFCCs, Mel Spectrograms, pitch vibrato, AASIST raw waveform phase, and LFCC cepstral coefficients.</p>
-                        <span class="w-tag">3-Layer Ensemble</span>
+                        <p>Evaluates MFCCs, Mel Spectrograms, pitch vibrato, AASIST raw waveform phase, LFCC cepstral coefficients, and WavLM SSL embeddings.</p>
+                        <span class="w-tag">4-Layer Ensemble</span>
                     </div>
 
                     <div class="light-panel welcome-card">
@@ -205,11 +205,11 @@
                         <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
                         <div class="flow-node"><span>PyAV Preprocessing</span></div>
                         <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-                        <div class="flow-node node-highlight"><span>3-Layer Analysis</span></div>
+                        <div class="flow-node node-highlight"><span>4-Layer Analysis</span></div>
                         <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
                         <div class="flow-node"><span>Ensemble Fusion</span></div>
                         <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-                        <div class="flow-node node-verdict"><span>Verdict & Confidence</span></div>
+                        <div class="flow-node node-verdict"><span>Verdict & Risk Score</span></div>
                     </div>
                 </div>
             </section>
@@ -270,7 +270,7 @@
                     <!-- Gauges -->
                     <div class="verdict-right">
                         <div class="gauge-card">
-                            <span class="gauge-title">AI PROBABILITY</span>
+                            <span class="gauge-title">AI RISK SCORE</span>
                             <div id="gauge-score" class="gauge-value val-red">87%</div>
                             <div class="gauge-bar-bg">
                                 <div id="gauge-fill" class="gauge-bar-fill" style="width: 87%;"></div>
@@ -291,7 +291,7 @@
                     </div>
                 </div>
 
-                <!-- 3-Layer Score Breakdown Cards -->
+                <!-- 4-Layer Score Breakdown Cards -->
                 <div class="layer-cards-grid">
                     
                     <div class="light-panel layer-card">
@@ -302,7 +302,7 @@
                         <p class="layer-desc" id="l1-desc">MFCCs, Mel Spectrogram, Pitch Jitter, Spectral Centroid, Reverberation.</p>
                         <div class="layer-score-wrapper">
                             <span id="l1-score-val" class="layer-score">72%</span>
-                            <span class="layer-score-sub">AI Probability</span>
+                            <span class="layer-score-sub" id="l1-sub">AI Risk Score</span>
                         </div>
                         <div class="meter-bar-bg">
                             <div id="l1-meter" class="meter-bar-fill" style="width: 72%;"></div>
@@ -318,7 +318,7 @@
                         <p class="layer-desc" id="l2-desc">AASIST PyTorch Graph Neural Network raw waveform phase analysis.</p>
                         <div class="layer-score-wrapper">
                             <span id="l2-score-val" class="layer-score">91%</span>
-                            <span class="layer-score-sub">AI Probability</span>
+                            <span class="layer-score-sub" id="l2-sub">AI Risk Score</span>
                         </div>
                         <div class="meter-bar-bg">
                             <div id="l2-meter" class="meter-bar-fill" style="width: 91%;"></div>
@@ -334,12 +334,28 @@
                         <p class="layer-desc" id="l3-desc">LFCC (Linear Frequency Cepstral Coefficients) & Scikit-Learn Classifier.</p>
                         <div class="layer-score-wrapper">
                             <span id="l3-score-val" class="layer-score">84%</span>
-                            <span class="layer-score-sub">AI Probability</span>
+                            <span class="layer-score-sub" id="l3-sub">AI Risk Score</span>
                         </div>
                         <div class="meter-bar-bg">
                             <div id="l3-meter" class="meter-bar-fill" style="width: 84%;"></div>
                         </div>
                         <div id="l3-status" class="layer-status-tag">Status: Active</div>
+                    </div>
+
+                    <div class="light-panel layer-card">
+                        <div class="layer-card-header">
+                            <span class="layer-tag" id="l4-tag">FEATURE 4</span>
+                            <h4 id="l4-title">WavLM SSL Representation</h4>
+                        </div>
+                        <p class="layer-desc" id="l4-desc">WavLM Base 768-dimensional self-supervised speech representation encoder.</p>
+                        <div class="layer-score-wrapper">
+                            <span id="l4-score-val" class="layer-score">768-dim</span>
+                            <span class="layer-score-sub" id="l4-sub">SSL Vector Profiling</span>
+                        </div>
+                        <div class="meter-bar-bg">
+                            <div id="l4-meter" class="meter-bar-fill" style="width: 100%;"></div>
+                        </div>
+                        <div id="l4-status" class="layer-status-tag">Status: Representation Active</div>
                     </div>
                 </div>
 
@@ -350,7 +366,7 @@
                     <div class="light-panel explanation-card">
                         <h3><i class="fa-solid fa-magnifying-glass-chart icon-blue"></i> Technical Verdict Explanation</h3>
                         <div id="explanation-text" class="explanation-body">
-                            The ensemble system analyzed the media and computed an overall synthetic probability score.
+                            The ensemble system analyzed the media and computed an overall synthetic AI Risk Score.
                         </div>
                         
                         <h4 class="anomaly-heading"><i class="fa-solid fa-bug icon-amber"></i> Detected Technical Anomalies:</h4>
@@ -416,28 +432,28 @@
                                 <span id="forensic-verdict" class="f-val-verdict verdict-ai">AI-GENERATED</span>
                             </div>
                             <div class="f-meta-item">
-                                <span class="f-label">RISK ASSESSMENT</span>
-                                <span id="forensic-risk" class="f-val">HIGH SYNTHETIC RISK</span>
+                                <span class="f-label">EVIDENCE CONSISTENCY</span>
+                                <span id="forensic-risk" class="f-val">HIGH CONSISTENCY</span>
                             </div>
                         </div>
 
                         <div class="forensic-details-box">
                             <h4><i class="fa-solid fa-microscope icon-blue"></i> Forensic Findings Summary</h4>
-                            <p id="forensic-summary-text">The uploaded file underwent 3-layer spectro-temporal, 2D FFT spectral frequency, and phase continuity analysis.</p>
+                            <p id="forensic-summary-text">The uploaded file underwent 4-layer spectro-temporal, WavLM SSL embedding, 2D FFT spectral frequency, and phase continuity analysis.</p>
                             
                             <div class="forensic-table-wrap">
                                 <table class="forensic-table">
                                     <thead>
                                         <tr>
                                             <th>Analysis Dimension</th>
-                                            <th>Measurement Score</th>
+                                            <th>Measurement Score / Evidence</th>
                                             <th>Status</th>
                                         </tr>
                                     </thead>
                                     <tbody id="forensic-table-body">
                                         <tr>
-                                            <td>Layer 1: Acoustic & Vibrato Contours</td>
-                                            <td>72% Synthetic Risk</td>
+                                            <td>Layer 1: Acoustic & Pitch Vibrato Contours</td>
+                                            <td>72% AI Risk Score</td>
                                             <td><span class="tag-anom">Anomaly Detected</span></td>
                                         </tr>
                                     </tbody>

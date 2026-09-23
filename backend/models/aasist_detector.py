@@ -111,8 +111,8 @@ class AASISTDetector:
                 with torch.no_grad():
                     logits = self.model(tensor_in)
                     probs = torch.softmax(logits, dim=1).numpy()[0]
-                    # Index 1 corresponds to Spoof / AI probability
-                    ai_prob = float(probs[1])
+                    # Official AASIST / ASVspoof Convention: Index 0 = Spoof (AI), Index 1 = Bona-fide (Human)
+                    ai_prob = float(probs[0])
 
                 ai_prob = max(0.05, min(0.95, round(ai_prob, 4)))
                 return ai_prob, {
