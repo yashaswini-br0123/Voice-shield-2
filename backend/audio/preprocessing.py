@@ -122,9 +122,8 @@ def load_and_preprocess_audio(file_path: str) -> Tuple[np.ndarray, Dict[str, Any
     except Exception:
         audio_data = None
 
-    # 1. Try PyAV first (Universal decoder for AAC, M4A, WMA, OPUS, MP3, WAV, MP4, FLAC, etc.)
-
-    if av is not None:
+    # 1. Try PyAV (Universal decoder for AAC, M4A, WMA, OPUS, MP3, WAV, MP4, FLAC, etc.)
+    if audio_data is None and av is not None:
         try:
             audio_data, sr, orig_channels, duration = decode_with_pyav(file_path, target_sr=settings.TARGET_SAMPLE_RATE)
         except Exception as pyav_err:
