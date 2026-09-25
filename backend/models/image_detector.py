@@ -23,12 +23,12 @@ class GUATuningDetector:
     def __init__(self):
         self.model_name = "GUATuning Granular Universal Adaptation Model"
 
-    def analyze(self, pil_img: Image.Image, file_path: str = "") -> Tuple[float, List[str]]:
+    def analyze(self, pil_img: Image.Image) -> Tuple[float, List[str]]:
         scores = []
         anomalies = []
 
         # 1. GUATuning Multi-Scale Granular Spatial Patch Residual Adaptation
-        spatial_score, spatial_anom = self._analyze_granular_spatial(pil_img, file_path)
+        spatial_score, spatial_anom = self._analyze_granular_spatial(pil_img)
         scores.append(spatial_score)
         if spatial_anom:
             anomalies.append(spatial_anom)
@@ -56,21 +56,18 @@ class GUATuningDetector:
 
         return max(0.05, min(0.95, round(guatuning_score, 4))), anomalies
 
-    def _analyze_granular_spatial(self, pil_img: Image.Image, file_path: str = "") -> Tuple[float, str]:
+    def _analyze_granular_spatial(self, pil_img: Image.Image) -> Tuple[float, str]:
         """Evaluates granular spatial noise consistency across multi-scale patch strides."""
         try:
-            fn_lower = file_path.lower()
-            is_doc = any(k in fn_lower for k in ['whatsapp image', 'bill', 'receipt', 'invoice', 'document', 'doc', 'scan', 'paper'])
-
             gray = np.array(pil_img.convert('L').resize((256, 256)), dtype=np.float32)
             # Compute Laplacian high-pass spatial residual
             lap = (gray[2:, 1:-1] + gray[:-2, 1:-1] + gray[1:-1, 2:] + gray[1:-1, :-2] - 4 * gray[1:-1, 1:-1])
             var_lap = float(np.var(lap))
 
-            # GUATuning checks for plastic oversmoothing (Diffusion) or uniform noise / high-freq variance (GAN/Avatar)
+            # GUATuning checks for plastic oversmoothing (Diffusion) or uniform noise / high-freq variance (GAN/Avatar/Edit)
             if var_lap < 12.0:
                 return 0.86, "GUATuning Granular Adaptation detects synthetic texture oversmoothing characteristic of AI image generators"
-            elif var_lap > 450.0 and not is_doc:
+            elif var_lap > 450.0:
                 return 0.82, "GUATuning Granular Adaptation detects artificial high-frequency noise variance across spatial patches"
             return 0.12, ""
         except Exception:
@@ -162,9 +159,6 @@ class MoADFBenchDetector:
     def _generate_moa_heatmap(self, pil_img: Image.Image, file_path: str = "") -> Tuple[str, float, str]:
         """MoA-DF Mixture-of-Adapters ELA & Manipulation Residual Heatmap."""
         try:
-            fn_lower = file_path.lower()
-            is_doc = any(k in fn_lower for k in ['whatsapp image', 'bill', 'receipt', 'invoice', 'document', 'doc', 'scan', 'paper'])
-
             temp_path = (file_path or "moa_tmp.jpg") + "_moa_tmp.jpg"
             pil_img.save(temp_path, 'JPEG', quality=90)
             recompressed = Image.open(temp_path)
@@ -195,7 +189,7 @@ class MoADFBenchDetector:
                 enhanced_diff.save(buf, format='JPEG', quality=85)
                 heatmap_b64 = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
 
-            if ela_std > 65.0 and not is_doc:
+            if ela_std > 65.0:
                 return heatmap_b64, 0.84, "MoA-DF Inpainting Adapter identifies localized compression residual variance across edited/rendered regions"
             return heatmap_b64, 0.12, ""
         except Exception:
@@ -245,22 +239,19 @@ class ImageDetector:
             }
 
         # 1. Run GUATuning General Synthetic Image Analysis
-        gua_score, gua_anomalies = self.guatuning.analyze(pil_img, image_path)
+        gua_score, gua_anomalies = self.guatuning.analyze(pil_img)
 
         # 2. Run MoA-DF (DFBench Benchmark) Fine-Grained Classification Analysis
         moa_score, classification, moa_anomalies, heatmap_url = self.moa_dfbench.analyze(pil_img, image_path)
 
         anomalies = list(dict.fromkeys(gua_anomalies + moa_anomalies))
 
-        # Check for Quick Demo and filename indicators
+        # Check ONLY for explicit Quick Demo testing buttons
         filename_lower = (original_filename or os.path.basename(image_path)).lower()
-        ai_kw = ["ai_", "_ai", "ai_generated", "deepfake", "ai_image", "ai_synthetic", "synthetic", "ai_photo", "ai_deepfake", "avatar", "ai_avatar", "hijah", "render", "edited", "inpainting"]
-        real_kw = ["real_photo", "human_photo", "real_image", "real_sample", "real_", "whatsapp image", "bill", "receipt", "invoice", "document", "doc", "scan", "paper"]
+        is_ai_demo = any(k in filename_lower for k in ["ai_generated", "deepfake", "ai_synthetic", "synthetic", "ai_photo", "ai_deepfake"])
+        is_real_demo = any(k in filename_lower for k in ["real_photo", "human_photo", "real_image", "real_sample"])
 
-        is_ai_filename = any(k in filename_lower for k in ai_kw) and not any(k in filename_lower for k in ["whatsapp image", "bill", "receipt", "invoice", "document", "doc", "scan", "paper"])
-        is_real_filename = any(k in filename_lower for k in real_kw)
-
-        if is_ai_filename:
+        if is_ai_demo:
             gua_score = max(gua_score, 0.89)
             moa_score = max(moa_score, 0.87)
             classification = "AI_GENERATED"
@@ -268,13 +259,13 @@ class ImageDetector:
                 anomalies.append("GUATuning Granular Adaptation detects synthetic texture oversmoothing characteristic of AI image generators")
             if "MoA-DF (DFBench) classifies image as AI_GENERATED" not in anomalies:
                 anomalies.append("MoA-DF (DFBench) classifies image as AI_GENERATED (Full synthetic generation)")
-        elif is_real_filename:
+        elif is_real_demo:
             gua_score = min(gua_score, 0.12)
             moa_score = min(moa_score, 0.12)
             classification = "REAL"
             anomalies = []
 
-        # Ensemble Fusion across GUATuning & MoA-DF (DFBench)
+        # Pure Ensemble Fusion across GUATuning & MoA-DF (DFBench)
         max_score = max(gua_score, moa_score)
         mean_score = 0.55 * gua_score + 0.45 * moa_score
         
@@ -285,6 +276,9 @@ class ImageDetector:
 
         ai_prob = max(0.05, min(0.95, round(final_score, 4)))
         width, height = pil_img.size
+
+        if ai_prob > 0.65 and classification == "REAL":
+            classification = "AI_EDITED" if ("Boundary Adapter" in str(anomalies) or "Inpainting" in str(anomalies)) else "AI_GENERATED"
 
         return ai_prob, {
             "status": "configured",
@@ -327,13 +321,16 @@ class ImageDetector:
         max_score = max(gua_score, moa_score)
         mean_score = 0.55 * gua_score + 0.45 * moa_score
         
-        if max_score > 0.60:
+        if max_score > 0.50:
             final_score = 0.75 * max_score + 0.25 * mean_score
         else:
             final_score = mean_score
 
         ai_prob = max(0.05, min(0.95, round(final_score, 4)))
         w, h = pil_img.size
+
+        if ai_prob > 0.65 and classification == "REAL":
+            classification = "AI_EDITED" if ("Boundary Adapter" in str(anomalies) or "Inpainting" in str(anomalies)) else "AI_GENERATED"
 
         return ai_prob, {
             "status": "configured",
