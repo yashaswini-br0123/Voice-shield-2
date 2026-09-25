@@ -30,6 +30,7 @@ class GUATuningDetector:
         self.model_name = "GUATuning Granular Universal Adaptation Model"
 
     def analyze(self, pil_img: Image.Image) -> Tuple[float, List[str]]:
+        pil_img = pil_img.convert('RGB')
         scores = []
         anomalies = []
 
@@ -69,8 +70,8 @@ class GUATuningDetector:
             lap = (gray[2:, 1:-1] + gray[:-2, 1:-1] + gray[1:-1, 2:] + gray[1:-1, :-2] - 4 * gray[1:-1, 1:-1])
             var_lap = float(np.var(lap))
 
-            s_high = sigmoid(0.0015 * (var_lap - 4500.0))
-            s_smooth = sigmoid(-0.20 * (var_lap - 12.0))
+            s_high = sigmoid(0.0015 * (var_lap - 4800.0))
+            s_smooth = sigmoid(-0.012 * (var_lap - 420.0))
             score = max(s_high, s_smooth)
 
             if score > 0.50:
@@ -104,7 +105,7 @@ class GUATuningDetector:
             mean_outer = float(np.mean(outer_mag))
 
             peak_ratio = max_outer / (mean_outer + 1.0)
-            score = sigmoid(1.2 * (peak_ratio - 11.5))
+            score = sigmoid(4.0 * (peak_ratio - 1.45))
             if score > 0.50:
                 return score, "GUATuning Frequency Adaptation detects 2D spectral grid spikes characteristic of text-to-image AI models"
             return score, ""
@@ -121,9 +122,16 @@ class GUATuningDetector:
             corr_rb = float(np.corrcoef(r.flatten(), b.flatten())[0, 1])
             c_min = min(corr_rg, corr_rb)
 
-            score = sigmoid(40.0 * (c_min - 0.985))
+            s_corr = sigmoid(40.0 * (c_min - 0.985))
+            
+            hsv = pil_img.convert('HSV')
+            hsv_np = np.array(hsv, dtype=np.float32)
+            sat_mean = float(np.mean(hsv_np[:, :, 1]))
+            s_sat = sigmoid(0.06 * (sat_mean - 105.0))
+
+            score = max(s_corr, s_sat)
             if score > 0.50:
-                return score, "GUATuning Color Channel Covariance detects unnaturally coupled RGB phase correlation"
+                return score, "GUATuning Color Adaptation detects unnaturally coupled RGB phase correlation or synthetic saturation profile"
             return score, ""
         except Exception:
             return 0.05, ""
@@ -139,6 +147,7 @@ class MoADFBenchDetector:
         self.model_name = "MoA-DF Mixture-of-Adapters (DFBench Benchmark)"
 
     def analyze(self, pil_img: Image.Image, file_path: str = "") -> Tuple[float, str, List[str], str]:
+        pil_img = pil_img.convert('RGB')
         anomalies = []
         
         # 1. Inpainting / Local Edit Splicing Adapter
@@ -171,11 +180,12 @@ class MoADFBenchDetector:
     def _generate_moa_heatmap(self, pil_img: Image.Image, file_path: str = "") -> Tuple[str, float, str]:
         """MoA-DF Mixture-of-Adapters ELA & Manipulation Residual Heatmap."""
         try:
+            pil_img_rgb = pil_img.convert('RGB')
             temp_path = (file_path or "moa_tmp.jpg") + "_moa_tmp.jpg"
-            pil_img.save(temp_path, 'JPEG', quality=90)
+            pil_img_rgb.save(temp_path, 'JPEG', quality=90)
             recompressed = Image.open(temp_path)
 
-            diff = ImageChops.difference(pil_img, recompressed)
+            diff = ImageChops.difference(pil_img_rgb, recompressed)
             extrema = diff.getextrema()
             max_diff = max([ex[1] for ex in extrema])
             if max_diff == 0: max_diff = 1
@@ -209,9 +219,9 @@ class MoADFBenchDetector:
                 heatmap_b64 = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
 
             # Continuous Multi-Dimensional ELA Sigmoid probability score
-            s_max = sigmoid(0.12 * (raw_ela_max - 60.0))
-            s_pvar = sigmoid(3.5 * (ela_pvar - 0.75))
-            s_std = sigmoid(2.2 * (raw_ela_std - 3.40))
+            s_max = sigmoid(0.10 * (raw_ela_max - 55.0))
+            s_pvar = sigmoid(3.0 * (ela_pvar - 0.65))
+            s_std = sigmoid(2.0 * (raw_ela_std - 3.20))
             s_smooth = sigmoid(-15.0 * (raw_ela_std - 0.15))
 
             score = float(max(s_max, s_pvar, s_std, s_smooth))
@@ -233,8 +243,8 @@ class MoADFBenchDetector:
             mean_grad = (float(np.mean(grad_x)) + float(np.mean(grad_y))) / 2.0
             grad_ratio = max_grad / (mean_grad + 1e-3)
 
-            if max_grad > 100.0:
-                score = sigmoid(0.15 * (grad_ratio - 35.0))
+            if max_grad > 40.0:
+                score = sigmoid(0.12 * (grad_ratio - 16.0))
             else:
                 score = 0.05
 
