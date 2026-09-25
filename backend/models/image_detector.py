@@ -19,6 +19,30 @@ def sigmoid(x: float) -> float:
     return float(1.0 / (1.0 + np.exp(-x_clipped)))
 
 
+def standardize_image(pil_img: Image.Image) -> Image.Image:
+    """
+    Step 1 Universal Image Standardizer Preprocessor:
+    Converts all incoming uploaded images (PNG, JPG, WebP, RGBA, BMP, TIFF) into
+    a single canonical 24-bit TrueColor RGB JPEG baseline (Quality 92, max side 1024px)
+    before feeding into GUATuning & MoA-DF deepfake feature extractors.
+    """
+    try:
+        rgb_img = pil_img.convert('RGB')
+        max_dim = 1024
+        w, h = rgb_img.size
+        if max(w, h) > max_dim:
+            scale = max_dim / float(max(w, h))
+            new_w, new_h = max(1, int(w * scale)), max(1, int(h * scale))
+            rgb_img = rgb_img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+
+        buffer = io.BytesIO()
+        rgb_img.save(buffer, format='JPEG', quality=92)
+        buffer.seek(0)
+        return Image.open(buffer).convert('RGB')
+    except Exception:
+        return pil_img.convert('RGB')
+
+
 class GUATuningDetector:
     """
     GUATuning (Granular Universal Adaptation) General AI-Generated Image Detector.
@@ -30,7 +54,7 @@ class GUATuningDetector:
         self.model_name = "GUATuning Granular Universal Adaptation Model"
 
     def analyze(self, pil_img: Image.Image) -> Tuple[float, List[str]]:
-        pil_img = pil_img.convert('RGB')
+        pil_img = standardize_image(pil_img)
         scores = []
         anomalies = []
 
@@ -70,8 +94,8 @@ class GUATuningDetector:
             lap = (gray[2:, 1:-1] + gray[:-2, 1:-1] + gray[1:-1, 2:] + gray[1:-1, :-2] - 4 * gray[1:-1, 1:-1])
             var_lap = float(np.var(lap))
 
-            s_high = sigmoid(0.0015 * (var_lap - 4800.0))
-            s_smooth = sigmoid(-0.012 * (var_lap - 420.0))
+            s_high = sigmoid(0.0015 * (var_lap - 5500.0))
+            s_smooth = sigmoid(-0.008 * (var_lap - 250.0))
             score = max(s_high, s_smooth)
 
             if score > 0.50:
@@ -105,7 +129,7 @@ class GUATuningDetector:
             mean_outer = float(np.mean(outer_mag))
 
             peak_ratio = max_outer / (mean_outer + 1.0)
-            score = sigmoid(4.0 * (peak_ratio - 1.45))
+            score = sigmoid(8.0 * (peak_ratio - 1.60))
             if score > 0.50:
                 return score, "GUATuning Frequency Adaptation detects 2D spectral grid spikes characteristic of text-to-image AI models"
             return score, ""
@@ -122,12 +146,12 @@ class GUATuningDetector:
             corr_rb = float(np.corrcoef(r.flatten(), b.flatten())[0, 1])
             c_min = min(corr_rg, corr_rb)
 
-            s_corr = sigmoid(40.0 * (c_min - 0.985))
+            s_corr = sigmoid(50.0 * (c_min - 0.985))
             
             hsv = pil_img.convert('HSV')
             hsv_np = np.array(hsv, dtype=np.float32)
             sat_mean = float(np.mean(hsv_np[:, :, 1]))
-            s_sat = sigmoid(0.06 * (sat_mean - 105.0))
+            s_sat = sigmoid(0.12 * (sat_mean - 105.0))
 
             score = max(s_corr, s_sat)
             if score > 0.50:
@@ -147,7 +171,7 @@ class MoADFBenchDetector:
         self.model_name = "MoA-DF Mixture-of-Adapters (DFBench Benchmark)"
 
     def analyze(self, pil_img: Image.Image, file_path: str = "") -> Tuple[float, str, List[str], str]:
-        pil_img = pil_img.convert('RGB')
+        pil_img = standardize_image(pil_img)
         anomalies = []
         
         # 1. Inpainting / Local Edit Splicing Adapter
@@ -180,7 +204,7 @@ class MoADFBenchDetector:
     def _generate_moa_heatmap(self, pil_img: Image.Image, file_path: str = "") -> Tuple[str, float, str]:
         """MoA-DF Mixture-of-Adapters ELA & Manipulation Residual Heatmap."""
         try:
-            pil_img_rgb = pil_img.convert('RGB')
+            pil_img_rgb = standardize_image(pil_img)
             temp_path = (file_path or "moa_tmp.jpg") + "_moa_tmp.jpg"
             pil_img_rgb.save(temp_path, 'JPEG', quality=90)
             recompressed = Image.open(temp_path)
@@ -219,9 +243,9 @@ class MoADFBenchDetector:
                 heatmap_b64 = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
 
             # Continuous Multi-Dimensional ELA Sigmoid probability score
-            s_max = sigmoid(0.10 * (raw_ela_max - 55.0))
-            s_pvar = sigmoid(3.0 * (ela_pvar - 0.65))
-            s_std = sigmoid(2.0 * (raw_ela_std - 3.20))
+            s_max = sigmoid(0.15 * (raw_ela_max - 45.0))
+            s_pvar = sigmoid(18.0 * (ela_pvar - 0.20))
+            s_std = sigmoid(4.0 * (raw_ela_std - 1.80))
             s_smooth = sigmoid(-15.0 * (raw_ela_std - 0.15))
 
             score = float(max(s_max, s_pvar, s_std, s_smooth))
@@ -243,8 +267,18 @@ class MoADFBenchDetector:
             mean_grad = (float(np.mean(grad_x)) + float(np.mean(grad_y))) / 2.0
             grad_ratio = max_grad / (mean_grad + 1e-3)
 
-            if max_grad > 40.0:
-                score = sigmoid(0.12 * (grad_ratio - 16.0))
+            # Measure ELA patch variance to verify splicing vs printed text
+            buf = io.BytesIO()
+            pil_img.save(buf, 'JPEG', quality=90)
+            buf.seek(0)
+            recompressed = Image.open(buf)
+            diff = ImageChops.difference(pil_img, recompressed)
+            diff_res = np.array(diff.convert('L').resize((256, 256)), dtype=np.float32)
+            patches_ela = diff_res.reshape(16, 16, 16, 16)
+            ela_pvar = float(np.var(np.std(patches_ela, axis=(2, 3))))
+
+            if max_grad > 100.0 and ela_pvar > 0.20:
+                score = sigmoid(0.10 * (grad_ratio - 35.0))
             else:
                 score = 0.05
 
@@ -269,10 +303,11 @@ class ImageDetector:
 
     def analyze(self, image_path: str, original_filename: str = "") -> Tuple[float, Dict[str, Any]]:
         """
-        Loads an image, evaluates GUATuning & MoA-DF detectors, and returns composite AI Risk Score [0.0 - 1.0].
+        Loads an image, standardizes it, evaluates GUATuning & MoA-DF detectors, and returns composite AI Risk Score [0.0 - 1.0].
         """
         try:
-            pil_img = Image.open(image_path).convert('RGB')
+            raw_img = Image.open(image_path)
+            pil_img = standardize_image(raw_img)
         except Exception as e:
             return 0.12, {
                 "status": "error",
@@ -338,6 +373,7 @@ class ImageDetector:
 
     def analyze_pil_image(self, pil_img: Image.Image) -> Tuple[float, Dict[str, Any]]:
         """Fast in-memory analysis on PIL Image object."""
+        pil_img = standardize_image(pil_img)
         gua_score, gua_anom = self.guatuning.analyze(pil_img)
         moa_score, classification, moa_anom, heatmap_url = self.moa_dfbench.analyze(pil_img)
 
