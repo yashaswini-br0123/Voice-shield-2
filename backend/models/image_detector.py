@@ -13,6 +13,12 @@ except Exception:
     HAS_OPENCV = False
 
 
+def sigmoid(x: float) -> float:
+    """Continuous logistic sigmoid function mapping continuous features to probability [0.0, 1.0]."""
+    x_clipped = float(np.clip(x, -50.0, 50.0))
+    return float(1.0 / (1.0 + np.exp(-x_clipped)))
+
+
 class GUATuningDetector:
     """
     GUATuning (Granular Universal Adaptation) General AI-Generated Image Detector.
@@ -45,11 +51,11 @@ class GUATuningDetector:
         if color_anom:
             anomalies.append(color_anom)
 
-        max_gua = max(scores) if scores else 0.12
-        mean_gua = float(np.mean(scores)) if scores else 0.12
+        max_gua = max(scores) if scores else 0.05
+        mean_gua = float(np.mean(scores)) if scores else 0.05
 
         # Weighted Max Fusion: prevents a strong AI detection signal from being diluted by passive layers
-        if max_gua > 0.50:
+        if max_gua > 0.40:
             guatuning_score = 0.75 * max_gua + 0.25 * mean_gua
         else:
             guatuning_score = mean_gua
@@ -57,24 +63,27 @@ class GUATuningDetector:
         return max(0.05, min(0.95, round(guatuning_score, 4))), anomalies
 
     def _analyze_granular_spatial(self, pil_img: Image.Image) -> Tuple[float, str]:
-        """Evaluates granular spatial noise consistency across multi-scale patch strides."""
+        """Evaluates granular spatial noise consistency using continuous spatial residual logistics."""
         try:
             gray = np.array(pil_img.convert('L').resize((256, 256)), dtype=np.float32)
-            # Compute Laplacian high-pass spatial residual
             lap = (gray[2:, 1:-1] + gray[:-2, 1:-1] + gray[1:-1, 2:] + gray[1:-1, :-2] - 4 * gray[1:-1, 1:-1])
             var_lap = float(np.var(lap))
 
-            # GUATuning checks for plastic oversmoothing (Diffusion) or uniform noise / high-freq variance (GAN/Avatar/Edit)
-            if var_lap < 12.0:
-                return 0.86, "GUATuning Granular Adaptation detects synthetic texture oversmoothing characteristic of AI image generators"
-            elif var_lap > 4500.0:
-                return 0.82, "GUATuning Granular Adaptation detects artificial high-frequency noise variance across spatial patches"
-            return 0.12, ""
+            s_high = sigmoid(0.0015 * (var_lap - 4500.0))
+            s_smooth = sigmoid(-0.20 * (var_lap - 12.0))
+            score = max(s_high, s_smooth)
+
+            if score > 0.50:
+                if s_smooth > s_high:
+                    return score, "GUATuning Granular Adaptation detects synthetic texture oversmoothing characteristic of AI image generators"
+                else:
+                    return score, "GUATuning Granular Adaptation detects artificial high-frequency noise variance across spatial patches"
+            return score, ""
         except Exception:
-            return 0.12, ""
+            return 0.05, ""
 
     def _analyze_frequency_adaptation(self, pil_img: Image.Image) -> Tuple[float, str]:
-        """GUATuning 2D FFT Frequency Adaptation analysis."""
+        """GUATuning 2D FFT Frequency Adaptation continuous analysis."""
         try:
             gray_img = pil_img.convert('L').resize((256, 256))
             img_np = np.array(gray_img, dtype=np.float32)
@@ -95,26 +104,29 @@ class GUATuningDetector:
             mean_outer = float(np.mean(outer_mag))
 
             peak_ratio = max_outer / (mean_outer + 1.0)
-            if peak_ratio > 11.5:
-                return 0.88, "GUATuning Frequency Adaptation detects 2D spectral grid spikes characteristic of text-to-image AI models"
-            return 0.12, ""
+            score = sigmoid(1.2 * (peak_ratio - 11.5))
+            if score > 0.50:
+                return score, "GUATuning Frequency Adaptation detects 2D spectral grid spikes characteristic of text-to-image AI models"
+            return score, ""
         except Exception:
-            return 0.12, ""
+            return 0.05, ""
 
     def _analyze_color_covariance(self, pil_img: Image.Image) -> Tuple[float, str]:
-        """GUATuning inter-channel RGB covariance & phase correlation."""
+        """GUATuning inter-channel RGB covariance & phase correlation continuous analysis."""
         try:
             rgb = np.array(pil_img.resize((128, 128)), dtype=np.float32)
             r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
             
             corr_rg = float(np.corrcoef(r.flatten(), g.flatten())[0, 1])
             corr_rb = float(np.corrcoef(r.flatten(), b.flatten())[0, 1])
+            c_min = min(corr_rg, corr_rb)
 
-            if corr_rg > 0.985 and corr_rb > 0.985:
-                return 0.80, "GUATuning Color Channel Covariance detects unnaturally coupled RGB phase correlation"
-            return 0.12, ""
+            score = sigmoid(40.0 * (c_min - 0.985))
+            if score > 0.50:
+                return score, "GUATuning Color Channel Covariance detects unnaturally coupled RGB phase correlation"
+            return score, ""
         except Exception:
-            return 0.12, ""
+            return 0.05, ""
 
 
 class MoADFBenchDetector:
@@ -143,13 +155,13 @@ class MoADFBenchDetector:
 
         # Fine-grained DFBench Classification Label: REAL, AI_EDITED, AI_GENERATED
         if moa_score > 0.65:
-            if edit_score > 0.75 and boundary_score > 0.75:
+            if edit_score > 0.70 and boundary_score > 0.70:
                 classification = "AI_EDITED"
                 anomalies.append("MoA-DF (DFBench) classifies image as AI_EDITED (Local inpainting/splice detected)")
             else:
                 classification = "AI_GENERATED"
                 anomalies.append("MoA-DF (DFBench) classifies image as AI_GENERATED (Full synthetic generation)")
-        elif moa_score > 0.40:
+        elif moa_score > 0.35:
             classification = "AI_EDITED"
         else:
             classification = "REAL"
@@ -189,16 +201,16 @@ class MoADFBenchDetector:
                 enhanced_diff.save(buf, format='JPEG', quality=85)
                 heatmap_b64 = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
 
-            # Document background ratio awareness (light paper background > 55%)
-            gray_res = np.array(pil_img.convert('L').resize((256, 256)), dtype=np.float32)
-            bg_ratio = float(np.sum(gray_res > 140)) / float(gray_res.size)
-            ela_thresh = 6.0 if bg_ratio > 0.55 else 4.8
+            # Continuous ELA Sigmoid probability score
+            s_high = sigmoid(3.5 * (raw_ela_std - 4.95))
+            s_smooth = sigmoid(-15.0 * (raw_ela_std - 0.15))
+            score = max(s_high, s_smooth)
 
-            if raw_ela_std > ela_thresh or raw_ela_std < 0.15:
-                return heatmap_b64, 0.84, "MoA-DF Inpainting Adapter identifies localized compression residual variance across edited/rendered regions"
-            return heatmap_b64, 0.12, ""
+            if score > 0.50:
+                return heatmap_b64, score, "MoA-DF Inpainting Adapter identifies localized compression residual variance across edited/rendered regions"
+            return heatmap_b64, score, ""
         except Exception:
-            return "", 0.12, ""
+            return "", 0.05, ""
 
     def _analyze_boundary_gradients(self, pil_img: Image.Image) -> Tuple[float, str]:
         """MoA-DF Boundary Gradient Splicing Adapter."""
@@ -211,11 +223,16 @@ class MoADFBenchDetector:
             mean_grad = (float(np.mean(grad_x)) + float(np.mean(grad_y))) / 2.0
             grad_ratio = max_grad / (mean_grad + 1e-3)
 
-            if max_grad > 160.0 and mean_grad < 4.0 and grad_ratio > 35.0:
-                return 0.82, "MoA-DF Boundary Adapter detects sharp local edit gradient boundary mismatch"
-            return 0.12, ""
+            if max_grad > 160.0 and mean_grad < 4.0:
+                score = sigmoid(0.20 * (grad_ratio - 42.0))
+            else:
+                score = 0.05
+
+            if score > 0.50:
+                return score, "MoA-DF Boundary Adapter detects sharp local edit gradient boundary mismatch"
+            return score, ""
         except Exception:
-            return 0.12, ""
+            return 0.05, ""
 
 
 class ImageDetector:
