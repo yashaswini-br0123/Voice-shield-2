@@ -67,7 +67,7 @@ class GUATuningDetector:
             # GUATuning checks for plastic oversmoothing (Diffusion) or uniform noise / high-freq variance (GAN/Avatar/Edit)
             if var_lap < 12.0:
                 return 0.86, "GUATuning Granular Adaptation detects synthetic texture oversmoothing characteristic of AI image generators"
-            elif var_lap > 1000.0:
+            elif var_lap > 4500.0:
                 return 0.82, "GUATuning Granular Adaptation detects artificial high-frequency noise variance across spatial patches"
             return 0.12, ""
         except Exception:
