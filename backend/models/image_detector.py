@@ -182,6 +182,13 @@ class MoADFBenchDetector:
 
             diff_raw_np = np.array(diff, dtype=np.float32)
             raw_ela_std = float(np.std(diff_raw_np))
+            raw_ela_max = float(np.max(diff_raw_np))
+
+            # Local Patch ELA Standard Deviation Variance across 16x16 grid patches
+            diff_res = np.array(diff.convert('L').resize((256, 256)), dtype=np.float32)
+            patches_ela = diff_res.reshape(16, 16, 16, 16)
+            patch_ela_stds = np.std(patches_ela, axis=(2, 3))
+            ela_pvar = float(np.var(patch_ela_stds))
 
             scale = 255.0 / max_diff
             enhanced_diff = ImageEnhance.Brightness(diff).enhance(scale)
@@ -201,10 +208,13 @@ class MoADFBenchDetector:
                 enhanced_diff.save(buf, format='JPEG', quality=85)
                 heatmap_b64 = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
 
-            # Continuous ELA Sigmoid probability score
-            s_high = sigmoid(3.5 * (raw_ela_std - 4.95))
+            # Continuous Multi-Dimensional ELA Sigmoid probability score
+            s_max = sigmoid(0.12 * (raw_ela_max - 60.0))
+            s_pvar = sigmoid(3.5 * (ela_pvar - 0.75))
+            s_std = sigmoid(2.2 * (raw_ela_std - 3.40))
             s_smooth = sigmoid(-15.0 * (raw_ela_std - 0.15))
-            score = max(s_high, s_smooth)
+
+            score = float(max(s_max, s_pvar, s_std, s_smooth))
 
             if score > 0.50:
                 return heatmap_b64, score, "MoA-DF Inpainting Adapter identifies localized compression residual variance across edited/rendered regions"
@@ -223,8 +233,8 @@ class MoADFBenchDetector:
             mean_grad = (float(np.mean(grad_x)) + float(np.mean(grad_y))) / 2.0
             grad_ratio = max_grad / (mean_grad + 1e-3)
 
-            if max_grad > 160.0 and mean_grad < 4.0:
-                score = sigmoid(0.20 * (grad_ratio - 42.0))
+            if max_grad > 100.0:
+                score = sigmoid(0.15 * (grad_ratio - 35.0))
             else:
                 score = 0.05
 
