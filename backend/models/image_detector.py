@@ -269,35 +269,14 @@ class ImageDetector:
 
         anomalies = list(dict.fromkeys(gua_anomalies + moa_anomalies))
 
-        # Check ONLY for explicit Quick Demo testing buttons
-        filename_lower = (original_filename or os.path.basename(image_path)).lower()
-        is_ai_demo = any(k in filename_lower for k in ["ai_generated", "deepfake", "ai_synthetic", "synthetic", "ai_photo", "ai_deepfake"])
-        is_real_demo = any(k in filename_lower for k in ["real_photo", "human_photo", "real_image", "real_sample"])
-
-        if is_ai_demo:
-            gua_score = max(gua_score, 0.89)
-            moa_score = max(moa_score, 0.87)
-            classification = "AI_GENERATED"
-            if "GUATuning Granular Adaptation detects synthetic texture oversmoothing" not in anomalies:
-                anomalies.append("GUATuning Granular Adaptation detects synthetic texture oversmoothing characteristic of AI image generators")
-            if "MoA-DF (DFBench) classifies image as AI_GENERATED" not in anomalies:
-                anomalies.append("MoA-DF (DFBench) classifies image as AI_GENERATED (Full synthetic generation)")
-        elif is_real_demo:
-            gua_score = min(gua_score, 0.12)
-            moa_score = min(moa_score, 0.12)
-            classification = "REAL"
-            anomalies = []
-
         # Pure Ensemble Fusion across GUATuning & MoA-DF (DFBench)
         max_score = max(gua_score, moa_score)
-        mean_score = 0.55 * gua_score + 0.45 * moa_score
+        mean_score = (gua_score + moa_score) / 2.0
         
-        if max_score >= 0.80:
-            final_score = 0.75 * max_score + 0.25 * mean_score
-        elif max_score > 0.50:
-            final_score = 0.70 * max_score + 0.30 * mean_score
+        if max_score > 0.35:
+            final_score = 0.80 * max_score + 0.20 * mean_score
         else:
-            final_score = mean_score
+            final_score = max_score
 
         ai_prob = max(0.05, min(0.95, round(final_score, 4)))
         width, height = pil_img.size
