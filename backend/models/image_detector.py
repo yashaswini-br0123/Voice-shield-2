@@ -67,7 +67,7 @@ class GUATuningDetector:
             # GUATuning checks for plastic oversmoothing (Diffusion) or uniform noise / high-freq variance (GAN/Avatar/Edit)
             if var_lap < 12.0:
                 return 0.86, "GUATuning Granular Adaptation detects synthetic texture oversmoothing characteristic of AI image generators"
-            elif var_lap > 450.0:
+            elif var_lap > 1000.0:
                 return 0.82, "GUATuning Granular Adaptation detects artificial high-frequency noise variance across spatial patches"
             return 0.12, ""
         except Exception:
@@ -168,11 +168,11 @@ class MoADFBenchDetector:
             max_diff = max([ex[1] for ex in extrema])
             if max_diff == 0: max_diff = 1
 
+            diff_raw_np = np.array(diff, dtype=np.float32)
+            raw_ela_std = float(np.std(diff_raw_np))
+
             scale = 255.0 / max_diff
             enhanced_diff = ImageEnhance.Brightness(diff).enhance(scale)
-            diff_np = np.array(enhanced_diff, dtype=np.float32)
-            ela_gray = np.mean(diff_np, axis=2)
-            ela_std = float(np.std(ela_gray))
 
             if os.path.exists(temp_path):
                 try: os.remove(temp_path)
@@ -189,7 +189,12 @@ class MoADFBenchDetector:
                 enhanced_diff.save(buf, format='JPEG', quality=85)
                 heatmap_b64 = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
 
-            if ela_std > 65.0:
+            # Document background ratio awareness (light paper background > 55%)
+            gray_res = np.array(pil_img.convert('L').resize((256, 256)), dtype=np.float32)
+            bg_ratio = float(np.sum(gray_res > 140)) / float(gray_res.size)
+            ela_thresh = 6.0 if bg_ratio > 0.55 else 4.8
+
+            if raw_ela_std > ela_thresh or raw_ela_std < 0.15:
                 return heatmap_b64, 0.84, "MoA-DF Inpainting Adapter identifies localized compression residual variance across edited/rendered regions"
             return heatmap_b64, 0.12, ""
         except Exception:
@@ -204,8 +209,9 @@ class MoADFBenchDetector:
 
             max_grad = max(float(np.max(grad_x)), float(np.max(grad_y)))
             mean_grad = (float(np.mean(grad_x)) + float(np.mean(grad_y))) / 2.0
+            grad_ratio = max_grad / (mean_grad + 1e-3)
 
-            if max_grad > 130.0 and mean_grad < 5.5:
+            if max_grad > 160.0 and mean_grad < 4.0 and grad_ratio > 35.0:
                 return 0.82, "MoA-DF Boundary Adapter detects sharp local edit gradient boundary mismatch"
             return 0.12, ""
         except Exception:
@@ -269,15 +275,17 @@ class ImageDetector:
         max_score = max(gua_score, moa_score)
         mean_score = 0.55 * gua_score + 0.45 * moa_score
         
-        if max_score > 0.50:
+        if max_score >= 0.80:
             final_score = 0.75 * max_score + 0.25 * mean_score
+        elif max_score > 0.50:
+            final_score = 0.70 * max_score + 0.30 * mean_score
         else:
             final_score = mean_score
 
         ai_prob = max(0.05, min(0.95, round(final_score, 4)))
         width, height = pil_img.size
 
-        if ai_prob > 0.65 and classification == "REAL":
+        if ai_prob > 0.55 and classification == "REAL":
             classification = "AI_EDITED" if ("Boundary Adapter" in str(anomalies) or "Inpainting" in str(anomalies)) else "AI_GENERATED"
 
         return ai_prob, {
