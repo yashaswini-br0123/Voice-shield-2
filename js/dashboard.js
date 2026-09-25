@@ -56,6 +56,7 @@ class DashboardManager {
         if (btnPdf) {
             btnPdf.addEventListener('click', () => this.generateForensicPDF());
         }
+        this.lastAnalysisData = null;
     }
 
     generateForensicPDF() {
@@ -67,6 +68,7 @@ class DashboardManager {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
 
+        const mediaType = (this.lastAnalysisData && this.lastAnalysisData.media_type) || "audio";
         const forensicId = document.getElementById('forensic-id')?.textContent || `VS-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}-X`;
         const timeStr = document.getElementById('forensic-time')?.textContent || new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
         const verdictText = document.getElementById('verdict-text')?.textContent || 'LIKELY HUMAN';
@@ -74,19 +76,100 @@ class DashboardManager {
         const confidenceScore = document.getElementById('confidence-score')?.textContent || '0%';
         const explanationText = document.getElementById('explanation-text')?.textContent || '';
 
+        // Media-Specific Report Titles & Subtitles
+        let reportTitle = "VOICESHIELD VOICE FORENSIC REPORT";
+        let reportSubtitle = "4-LAYER AUDIO MULTIMODAL EVIDENCE DOSSIER";
+        let sectionTitle = "4-LAYER VOICE SPEECH EVIDENCE ANALYSIS";
+        let col1Header = "Detection Module / Layer";
+        let col2Header = "Metric / Representation Output";
+        let layers = [];
+
+        if (mediaType === "image") {
+            reportTitle = "VOICESHIELD IMAGE FORENSIC REPORT";
+            reportSubtitle = "GUATUNING & MOA-DF DUAL-MODEL IMAGE EVIDENCE DOSSIER";
+            sectionTitle = "GUATUNING & MOA-DF IMAGE EVIDENCE ANALYSIS";
+            col1Header = "Image Detection Module / Model";
+            col2Header = "Feature Metric / Representation Output";
+            const imgDet = (this.lastAnalysisData && this.lastAnalysisData.layer_details && this.lastAnalysisData.layer_details.image) || {};
+            layers = [
+                {
+                    name: "GUATuning Granular Universal Adaptation",
+                    desc: `${Math.round((imgDet.guatuning_score || 0.05) * 100)}% AI Risk Score`,
+                    sub: imgDet.guatuning_score > 0.40 ? "Status: Anomaly Flagged" : "Status: Verified Natural"
+                },
+                {
+                    name: "MoA-DF Mixture-of-Adapters (DFBench)",
+                    desc: `${Math.round((imgDet.moa_dfbench_score || 0.05) * 100)}% AI Risk Score`,
+                    sub: imgDet.moa_dfbench_score > 0.40 ? "Status: Anomaly Flagged" : "Status: Verified Natural"
+                },
+                {
+                    name: "MoA-DF Inpainting & Boundary Heatmap",
+                    desc: imgDet.classification_label || "REAL",
+                    sub: "Status: Active Heatmap"
+                }
+            ];
+        } else if (mediaType === "video") {
+            reportTitle = "VOICESHIELD VIDEO FORENSIC REPORT";
+            reportSubtitle = "FAKESTORMER SPATIO-TEMPORAL VIDEO EVIDENCE DOSSIER";
+            sectionTitle = "FAKESTORMER VIDEO SPATIO-TEMPORAL ANALYSIS";
+            col1Header = "Video Detection Module / Model";
+            col2Header = "Spatio-Temporal Metric";
+            const vidDet = (this.lastAnalysisData && this.lastAnalysisData.layer_details && this.lastAnalysisData.layer_details.video) || {};
+            layers = [
+                {
+                    name: "FakeSTormer Visual Keyframe Detector",
+                    desc: `${Math.round((vidDet.visual_ai_prob || 0.20) * 100)}% AI Risk Score`,
+                    sub: vidDet.visual_ai_prob > 0.50 ? "Status: Anomaly Flagged" : "Status: Verified Natural"
+                },
+                {
+                    name: "FakeSTormer Inter-Frame Temporal Motion",
+                    desc: `${Math.round((vidDet.temporal_ai_prob || 0.20) * 100)}% AI Risk Score`,
+                    sub: vidDet.temporal_ai_prob > 0.50 ? "Status: Anomaly Flagged" : "Status: Verified Natural"
+                },
+                {
+                    name: "FakeSTormer Spatio-Temporal Score Fusion",
+                    desc: `${Math.round((this.lastAnalysisData.ai_probability || 0.20) * 100)}% AI Risk Score`,
+                    sub: "Status: Active Fusion"
+                }
+            ];
+        } else {
+            layers = [
+                {
+                    name: "Layer 1: Acoustic Analysis",
+                    desc: document.getElementById('l1-score-val')?.textContent || "N/A",
+                    sub: document.getElementById('l1-status')?.textContent || "Status: Active"
+                },
+                {
+                    name: "Layer 2: Waveform & Phase (AASIST)",
+                    desc: document.getElementById('l2-score-val')?.textContent || "N/A",
+                    sub: document.getElementById('l2-status')?.textContent || "Status: Active"
+                },
+                {
+                    name: "Layer 3: Spectral Analysis (LFCC)",
+                    desc: document.getElementById('l3-score-val')?.textContent || "N/A",
+                    sub: document.getElementById('l3-status')?.textContent || "Status: Active"
+                },
+                {
+                    name: "Layer 4: WavLM SSL Representation",
+                    desc: document.getElementById('l4-score-val')?.textContent || "768-dim",
+                    sub: document.getElementById('l4-status')?.textContent || "Status: Representation Active"
+                }
+            ];
+        }
+
         // Cyber Security Header Banner
         doc.setFillColor(15, 23, 42); // #0f172a (Dark navy)
         doc.rect(0, 0, 210, 38, 'F');
 
         doc.setTextColor(255, 255, 255);
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(18);
-        doc.text("VOICESHIELD CYBER FORENSIC REPORT", 14, 18);
+        doc.setFontSize(16);
+        doc.text(reportTitle, 14, 18);
 
         doc.setFont("helvetica", "normal");
-        doc.setFontSize(9);
+        doc.setFontSize(8.5);
         doc.setTextColor(148, 163, 184); // #94a3b8
-        doc.text("MULTIMODAL AI DEEPFAKE DETECTION & EVIDENCE DOSSIER", 14, 26);
+        doc.text(reportSubtitle, 14, 26);
         doc.text(`REPORT ID: ${forensicId}  |  DATE: ${timeStr}`, 14, 32);
 
         // Section 1: Executive Summary Card
@@ -116,12 +199,12 @@ class DashboardManager {
         doc.text(`AI Risk Score: ${aiRiskScore}`, 110, y + 14);
         doc.text(`Confidence Score: ${confidenceScore}`, 110, y + 22);
 
-        // Section 2: 4-Layer Forensic Evidence Breakdown
+        // Section 2: Forensic Evidence Breakdown
         y += 42;
         doc.setFont("helvetica", "bold");
         doc.setFontSize(11);
         doc.setTextColor(15, 23, 42);
-        doc.text("MULTIMODAL EVIDENCE LAYER ANALYSIS", 14, y);
+        doc.text(sectionTitle, 14, y);
 
         y += 6;
         // Table Header
@@ -129,34 +212,11 @@ class DashboardManager {
         doc.rect(14, y, 182, 8, 'F');
         doc.setFontSize(8.5);
         doc.setTextColor(255, 255, 255);
-        doc.text("Detection Module / Layer", 18, y + 5.5);
-        doc.text("Metric / Representation Output", 92, y + 5.5);
+        doc.text(col1Header, 18, y + 5.5);
+        doc.text(col2Header, 92, y + 5.5);
         doc.text("Status / Verdict", 137, y + 5.5);
 
         y += 8;
-
-        const layers = [
-            {
-                name: "Layer 1: Acoustic Analysis",
-                desc: document.getElementById('l1-score-val')?.textContent || "N/A",
-                sub: document.getElementById('l1-status')?.textContent || "Status: Active"
-            },
-            {
-                name: "Layer 2: Waveform & Phase (AASIST)",
-                desc: document.getElementById('l2-score-val')?.textContent || "N/A",
-                sub: document.getElementById('l2-status')?.textContent || "Status: Active"
-            },
-            {
-                name: "Layer 3: Spectral Analysis (LFCC)",
-                desc: document.getElementById('l3-score-val')?.textContent || "N/A",
-                sub: document.getElementById('l3-status')?.textContent || "Status: Active"
-            },
-            {
-                name: "Layer 4: WavLM SSL Representation",
-                desc: document.getElementById('l4-score-val')?.textContent || "768-dim",
-                sub: document.getElementById('l4-status')?.textContent || "Status: Representation Active"
-            }
-        ];
 
         layers.forEach((layer, idx) => {
             doc.setFillColor(idx % 2 === 0 ? 255 : 248, idx % 2 === 0 ? 255 : 250, idx % 2 === 0 ? 255 : 252);
@@ -295,6 +355,7 @@ class DashboardManager {
     }
 
     renderResults(data) {
+        this.lastAnalysisData = data;
         if (this.welcomeDashboard) this.welcomeDashboard.classList.add('hidden');
         if (this.errorDisplay) this.errorDisplay.classList.add('hidden');
         

@@ -141,7 +141,7 @@ class VideoDetector:
         frame_laplacians = []
 
         for img in pil_frames:
-            # Analyze each frame using SpecXNet dual-domain image detector
+            # Analyze each frame using GUATuning & MoA-DF dual-model image detector
             score, details = self.image_detector.analyze_pil_image(img)
             frame_scores.append(score)
 
