@@ -7,7 +7,7 @@ from backend.models.image_detector import ImageDetector
 from backend.models.video_detector import VideoDetector
 
 
-def test_specxnet_image_detector():
+def test_guatuning_moadf_image_detector():
     # Create sample synthetic RGB test image
     img_data = np.random.randint(0, 256, (200, 200, 3), dtype=np.uint8)
     pil_img = Image.fromarray(img_data)
@@ -21,9 +21,11 @@ def test_specxnet_image_detector():
         score, details = detector.analyze(tmp_path)
         assert 0.0 <= score <= 1.0
         assert details["status"] == "configured"
-        assert details["detector"] == "SpecXNet Dual-Domain Architecture"
-        assert "fft_spectral_score" in details
-        assert "ela_compression_score" in details
+        assert details["detector"] == "GUATuning & MoA-DF (DFBench) Dual-Model Architecture"
+        assert "guatuning_score" in details
+        assert "moa_dfbench_score" in details
+        assert "classification_label" in details
+        assert details["classification_label"] in ["REAL", "AI_EDITED", "AI_GENERATED"]
         assert "heatmap_url" in details
         assert isinstance(details["heatmap_url"], str)
     finally:

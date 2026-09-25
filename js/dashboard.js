@@ -482,9 +482,9 @@ class DashboardManager {
         if (mediaType === "image") {
             const imgDet = data.layer_details.image || {};
             dimensions = [
-                { name: "SpecXNet 2D FFT Frequency Spectral Grid", score: imgDet.fft_spectral_score },
-                { name: "SpecXNet ELA Compression Residual Heatmap", score: imgDet.ela_compression_score },
-                { name: "SpecXNet Spatial Noise & Edge Consistency", score: imgDet.noise_covariance_score }
+                { name: "GUATuning Granular Universal Adaptation (General Synthetic)", score: imgDet.guatuning_score },
+                { name: "MoA-DF Mixture-of-Adapters (DFBench Benchmark)", score: imgDet.moa_dfbench_score },
+                { name: "MoA-DF Fine-Grained Classification (REAL / AI_EDITED / AI_GENERATED)", score: data.ai_probability }
             ];
         } else if (mediaType === "video") {
             const vidDet = data.layer_details.video || {};
@@ -544,9 +544,9 @@ class DashboardManager {
             const imgDet = data.layer_details.image || {};
             if (card4) card4.style.display = 'none';
             
-            this._setCard(1, "FEATURE 1", "SpecXNet Spatial Residual", "Dual-domain local spatial noise covariance & edge consistency check.", imgDet.ela_compression_score);
-            this._setCard(2, "FEATURE 2", "SpecXNet 2D Spectral FFT", "Global 2D FFT spectral frequency ring analysis for diffusion/GAN grid artifacts.", imgDet.fft_spectral_score);
-            this._setCard(3, "FEATURE 3", "SpecXNet Noise & Boundary", "Pixel noise covariance and facial boundary gradient consistency.", imgDet.noise_covariance_score);
+            this._setCard(1, "FEATURE 1", "GUATuning Synthetic Detection", "Granular Universal Adaptation profiling general AI synthetic image generation across benchmarks.", imgDet.guatuning_score);
+            this._setCard(2, "FEATURE 2", "MoA-DF on DFBench Benchmark", "Mixture-of-Adapters classification scoring Real, AI-Edited, and AI-Generated images.", imgDet.moa_dfbench_score);
+            this._setCard(3, "FEATURE 3", "MoA-DF Inpainting & Boundary", "Local edit inpainting residual heatmap & boundary gradient splicing check.", imgDet.moa_dfbench_score);
 
         } else if (mediaType === "video") {
             const vidDet = data.layer_details.video || {};

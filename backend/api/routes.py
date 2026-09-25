@@ -95,7 +95,7 @@ async def health_check():
                 "configured": spectral.is_loaded,
                 "model_path": settings.SPECTRAL_MODEL_PATH
             },
-            "image_detector_fft_ela": {
+            "image_detector_guatuning_moadf": {
                 "configured": True
             },
             "video_multimodal_detector": {
@@ -133,7 +133,7 @@ async def analyze_media(
     with save_temp_file(contents, file.filename or "upload.bin") as temp_path:
         
         if media_type == "image":
-            # Image Deepfake Analysis
+            # Image Deepfake Analysis (GUATuning + MoA-DF on DFBench)
             score, img_details = get_image_model().analyze(temp_path, original_filename=file.filename or "")
             proc_time = round(time.time() - start_time, 3)
 
@@ -143,9 +143,10 @@ async def analyze_media(
 
             anomalies = img_details.get("anomalies", [])
             verdict_label = "LIKELY AI-GENERATED" if score > 0.50 else "LIKELY HUMAN"
+            cls_tag = img_details.get("classification_label", "AI_GENERATED" if score > 0.50 else "REAL")
             explanation = (
-                f"SpecXNet performed dual-domain spatial residual and 2D FFT spectral analysis "
-                f"on the uploaded image ({img_details.get('dimensions', 'N/A')}) and classified it as {verdict_label} (AI Risk Score: {int(score * 100)}%)."
+                f"GUATuning (General Synthetic Adaptation) & MoA-DF (DFBench Benchmark) performed dual-model "
+                f"analysis on the uploaded image ({img_details.get('dimensions', 'N/A')}), classifying it as {verdict_label} [{cls_tag}] (AI Risk Score: {int(score * 100)}%)."
             )
 
             return {
@@ -158,9 +159,8 @@ async def analyze_media(
                 "demo_mode": settings.DEMO_MODE,
                 "heatmap_url": img_details.get("heatmap_url"),
                 "layers": {
-                    "fft_spectral": img_details.get("fft_spectral_score"),
-                    "ela_compression": img_details.get("ela_compression_score"),
-                    "noise_covariance": img_details.get("noise_covariance_score")
+                    "guatuning_synthetic": img_details.get("guatuning_score"),
+                    "moa_dfbench_classification": img_details.get("moa_dfbench_score")
                 },
                 "layer_details": {"image": img_details},
                 "audio": None,
