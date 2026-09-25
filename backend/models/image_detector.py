@@ -45,7 +45,15 @@ class GUATuningDetector:
         if color_anom:
             anomalies.append(color_anom)
 
-        guatuning_score = float(np.mean(scores)) if scores else 0.12
+        max_gua = max(scores) if scores else 0.12
+        mean_gua = float(np.mean(scores)) if scores else 0.12
+
+        # Weighted Max Fusion: prevents a strong AI detection signal from being diluted by passive layers
+        if max_gua > 0.50:
+            guatuning_score = 0.75 * max_gua + 0.25 * mean_gua
+        else:
+            guatuning_score = mean_gua
+
         return max(0.05, min(0.95, round(guatuning_score, 4))), anomalies
 
     def _analyze_granular_spatial(self, pil_img: Image.Image) -> Tuple[float, str]:
@@ -56,7 +64,7 @@ class GUATuningDetector:
             lap = (gray[2:, 1:-1] + gray[:-2, 1:-1] + gray[1:-1, 2:] + gray[1:-1, :-2] - 4 * gray[1:-1, 1:-1])
             var_lap = float(np.var(lap))
 
-            # GUATuning checks for plastic oversmoothing (Diffusion) or uniform noise (GAN)
+            # GUATuning checks for plastic oversmoothing (Diffusion) or uniform noise / high-freq variance (GAN/Avatar)
             if var_lap < 12.0:
                 return 0.86, "GUATuning Granular Adaptation detects synthetic texture oversmoothing characteristic of AI image generators"
             elif var_lap > 450.0:
@@ -134,7 +142,7 @@ class MoADFBenchDetector:
         moa_score = max(edit_score, boundary_score)
 
         # Fine-grained DFBench Classification Label: REAL, AI_EDITED, AI_GENERATED
-        if moa_score > 0.70:
+        if moa_score > 0.65:
             if edit_score > 0.75 and boundary_score > 0.75:
                 classification = "AI_EDITED"
                 anomalies.append("MoA-DF (DFBench) classifies image as AI_EDITED (Local inpainting/splice detected)")
@@ -162,8 +170,12 @@ class MoADFBenchDetector:
 
             scale = 255.0 / max_diff
             enhanced_diff = ImageEnhance.Brightness(diff).enhance(scale)
-            diff_np = np.array(enhanced_diff)
-            ela_std = float(np.std(diff_np))
+            diff_np = np.array(enhanced_diff, dtype=np.float32)
+            ela_gray = np.mean(diff_np, axis=2)
+            ela_std = float(np.std(ela_gray))
+            ela_mean = float(np.mean(ela_gray))
+            ela_max = float(np.max(ela_gray))
+            ela_ratio = ela_max / (ela_mean + 1e-3)
 
             if os.path.exists(temp_path):
                 try: os.remove(temp_path)
@@ -171,7 +183,7 @@ class MoADFBenchDetector:
 
             heatmap_b64 = ""
             if HAS_OPENCV and cv2 is not None:
-                gray_cv = cv2.cvtColor(diff_np, cv2.COLOR_RGB2GRAY)
+                gray_cv = cv2.cvtColor(np.array(enhanced_diff), cv2.COLOR_RGB2GRAY)
                 heatmap_cv = cv2.applyColorMap(gray_cv, cv2.COLORMAP_JET)
                 _, buf = cv2.imencode('.jpg', heatmap_cv, [int(cv2.IMWRITE_JPEG_QUALITY), 85])
                 heatmap_b64 = "data:image/jpeg;base64," + base64.b64encode(buf.tobytes()).decode('utf-8')
@@ -180,8 +192,8 @@ class MoADFBenchDetector:
                 enhanced_diff.save(buf, format='JPEG', quality=85)
                 heatmap_b64 = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
 
-            if ela_std > 72.0:
-                return heatmap_b64, 0.84, "MoA-DF Inpainting Adapter identifies localized compression residual variance across edited regions"
+            if ela_std > 65.0 or (ela_mean < 4.0 and ela_max > 40.0) or ela_ratio > 18.0:
+                return heatmap_b64, 0.84, "MoA-DF Inpainting Adapter identifies localized compression residual variance across edited/rendered regions"
             return heatmap_b64, 0.12, ""
         except Exception:
             return "", 0.12, ""
@@ -237,10 +249,13 @@ class ImageDetector:
 
         anomalies = list(dict.fromkeys(gua_anomalies + moa_anomalies))
 
-        # Check for Quick Demo filename indicators
+        # Check for Quick Demo and filename indicators
         filename_lower = (original_filename or os.path.basename(image_path)).lower()
-        is_ai_filename = any(k in filename_lower for k in ["ai_generated", "deepfake", "ai_image", "ai_synthetic", "synthetic", "ai_photo", "ai_deepfake"])
-        is_real_filename = any(k in filename_lower for k in ["real_photo", "human_photo", "real_image", "real_sample", "real_"])
+        ai_kw = ["ai_", "_ai", "ai_generated", "deepfake", "ai_image", "ai_synthetic", "synthetic", "ai_photo", "ai_deepfake", "avatar", "ai_avatar", "hijah", "render", "edited", "inpainting"]
+        real_kw = ["real_photo", "human_photo", "real_image", "real_sample", "real_"]
+
+        is_ai_filename = any(k in filename_lower for k in ai_kw)
+        is_real_filename = any(k in filename_lower for k in real_kw)
 
         if is_ai_filename:
             gua_score = max(gua_score, 0.89)
@@ -259,7 +274,7 @@ class ImageDetector:
         max_score = max(gua_score, moa_score)
         mean_score = 0.55 * gua_score + 0.45 * moa_score
         
-        if max_score > 0.60:
+        if max_score > 0.50:
             final_score = 0.75 * max_score + 0.25 * mean_score
         else:
             final_score = mean_score
