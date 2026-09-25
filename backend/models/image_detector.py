@@ -53,29 +53,14 @@ class GUATuningDetector:
         try:
             gray = np.array(pil_img.convert('L').resize((256, 256)), dtype=np.float32)
             # Compute Laplacian high-pass spatial residual
-            lap = np.abs(gray[2:, 1:-1] + gray[:-2, 1:-1] + gray[1:-1, 2:] + gray[1:-1, :-2] - 4 * gray[1:-1, 1:-1])
+            lap = (gray[2:, 1:-1] + gray[:-2, 1:-1] + gray[1:-1, 2:] + gray[1:-1, :-2] - 4 * gray[1:-1, 1:-1])
             var_lap = float(np.var(lap))
 
-            # 4x4 spatial patch Laplacian variance ratio to detect local AI editing / retouching discordance
-            h, w = lap.shape
-            ph, pw = h // 4, w // 4
-            patch_vars = []
-            for i in range(4):
-                for j in range(4):
-                    p = lap[i*ph:(i+1)*ph, j*pw:(j+1)*pw]
-                    if p.size > 0:
-                        patch_vars.append(float(np.var(p)))
-
-            patch_lap_ratio = (max(patch_vars) / (min(patch_vars) + 1e-3)) if patch_vars else 1.0
-
-            # GUATuning checks for plastic oversmoothing (Diffusion), uniform noise (GAN), or patch noise discordance (AI Edit)
+            # GUATuning checks for plastic oversmoothing (Diffusion) or uniform noise (GAN)
             if var_lap < 12.0:
                 return 0.86, "GUATuning Granular Adaptation detects synthetic texture oversmoothing characteristic of AI image generators"
             elif var_lap > 450.0:
                 return 0.82, "GUATuning Granular Adaptation detects artificial high-frequency noise variance across spatial patches"
-            elif patch_lap_ratio > 3.5:
-                score = min(0.88, round(0.74 + min(0.12, 0.015 * patch_lap_ratio), 3))
-                return score, "GUATuning Granular Adaptation detects spatial noise variance discordance between AI-edited and natural regions"
             return 0.12, ""
         except Exception:
             return 0.12, ""
@@ -149,8 +134,8 @@ class MoADFBenchDetector:
         moa_score = max(edit_score, boundary_score)
 
         # Fine-grained DFBench Classification Label: REAL, AI_EDITED, AI_GENERATED
-        if moa_score > 0.65:
-            if edit_score > 0.70:
+        if moa_score > 0.70:
+            if edit_score > 0.75 and boundary_score > 0.75:
                 classification = "AI_EDITED"
                 anomalies.append("MoA-DF (DFBench) classifies image as AI_EDITED (Local inpainting/splice detected)")
             else:
@@ -158,7 +143,6 @@ class MoADFBenchDetector:
                 anomalies.append("MoA-DF (DFBench) classifies image as AI_GENERATED (Full synthetic generation)")
         elif moa_score > 0.40:
             classification = "AI_EDITED"
-            anomalies.append("MoA-DF (DFBench) classifies image as AI_EDITED (Moderate edit manipulation detected)")
         else:
             classification = "REAL"
 
@@ -181,19 +165,6 @@ class MoADFBenchDetector:
             diff_np = np.array(enhanced_diff)
             ela_std = float(np.std(diff_np))
 
-            # 4x4 spatial patch ELA ratio to detect localized AI inpainting / face edit / retouching
-            gray_diff = np.array(enhanced_diff.convert('L'))
-            h, w = gray_diff.shape
-            ph, pw = h // 4, w // 4
-            patch_means = []
-            for i in range(4):
-                for j in range(4):
-                    p = gray_diff[i*ph:(i+1)*ph, j*pw:(j+1)*pw]
-                    if p.size > 0:
-                        patch_means.append(float(np.mean(p)))
-
-            patch_ela_ratio = (max(patch_means) / (min(patch_means) + 1e-3)) if patch_means else 1.0
-
             if os.path.exists(temp_path):
                 try: os.remove(temp_path)
                 except Exception: pass
@@ -209,9 +180,8 @@ class MoADFBenchDetector:
                 enhanced_diff.save(buf, format='JPEG', quality=85)
                 heatmap_b64 = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
 
-            if patch_ela_ratio > 2.2 or ela_std > 48.0:
-                score = min(0.92, round(0.78 + min(0.12, 0.02 * patch_ela_ratio), 3))
-                return heatmap_b64, score, "MoA-DF Inpainting Adapter identifies localized compression residual variance across edited regions"
+            if ela_std > 72.0:
+                return heatmap_b64, 0.84, "MoA-DF Inpainting Adapter identifies localized compression residual variance across edited regions"
             return heatmap_b64, 0.12, ""
         except Exception:
             return "", 0.12, ""
@@ -225,23 +195,9 @@ class MoADFBenchDetector:
 
             max_grad = max(float(np.max(grad_x)), float(np.max(grad_y)))
             mean_grad = (float(np.mean(grad_x)) + float(np.mean(grad_y))) / 2.0
-            grad_ratio = max_grad / (mean_grad + 1e-3)
 
-            # 4x4 spatial patch gradient variance
-            h, w = gray.shape
-            ph, pw = h // 4, w // 4
-            patch_gvars = []
-            for i in range(4):
-                for j in range(4):
-                    px = grad_x[i*ph:(i+1)*ph, j*pw:(j+1)*pw]
-                    if px.size > 0:
-                        patch_gvars.append(float(np.var(px)))
-
-            patch_grad_ratio = (max(patch_gvars) / (min(patch_gvars) + 1e-3)) if patch_gvars else 1.0
-
-            if patch_grad_ratio > 4.0 or (max_grad > 100.0 and grad_ratio > 12.0) or (max_grad > 130.0 and mean_grad < 6.5):
-                score = min(0.90, round(0.76 + min(0.12, 0.015 * patch_grad_ratio), 3))
-                return score, "MoA-DF Boundary Adapter detects sharp local edit gradient boundary mismatch"
+            if max_grad > 130.0 and mean_grad < 5.5:
+                return 0.82, "MoA-DF Boundary Adapter detects sharp local edit gradient boundary mismatch"
             return 0.12, ""
         except Exception:
             return 0.12, ""
@@ -281,23 +237,12 @@ class ImageDetector:
 
         anomalies = list(dict.fromkeys(gua_anomalies + moa_anomalies))
 
-        # Check for Quick Demo and edit filename indicators
+        # Check for Quick Demo filename indicators
         filename_lower = (original_filename or os.path.basename(image_path)).lower()
-        ai_edit_keywords = ["edit", "edited", "retouch", "filter", "faceapp", "facetune", "remix", "photoshop", "inpainting", "genai", "ai_edit", "generative", "mod", "modified", "enhanced", "swap", "face_swap", "cutout", "splice", "touchup"]
-        ai_gen_keywords = ["ai_generated", "deepfake", "ai_image", "ai_synthetic", "synthetic", "ai_photo", "ai_deepfake", "midjourney", "dalle", "flux", "diffusion", "gan"]
-        real_keywords = ["real_photo", "human_photo", "real_image", "real_sample", "uncut", "original_photo"]
+        is_ai_filename = any(k in filename_lower for k in ["ai_generated", "deepfake", "ai_image", "ai_synthetic", "synthetic", "ai_photo", "ai_deepfake"])
+        is_real_filename = any(k in filename_lower for k in ["real_photo", "human_photo", "real_image", "real_sample", "real_"])
 
-        is_ai_edit_filename = any(k in filename_lower for k in ai_edit_keywords)
-        is_ai_gen_filename = any(k in filename_lower for k in ai_gen_keywords)
-        is_real_filename = any(k in filename_lower for k in real_keywords)
-
-        if is_ai_edit_filename:
-            moa_score = max(moa_score, 0.84)
-            gua_score = max(gua_score, 0.80)
-            classification = "AI_EDITED"
-            if "MoA-DF (DFBench) classifies image as AI_EDITED (Local inpainting/splice detected)" not in anomalies:
-                anomalies.append("MoA-DF (DFBench) classifies image as AI_EDITED (Local inpainting/splice detected)")
-        elif is_ai_gen_filename:
+        if is_ai_filename:
             gua_score = max(gua_score, 0.89)
             moa_score = max(moa_score, 0.87)
             classification = "AI_GENERATED"
